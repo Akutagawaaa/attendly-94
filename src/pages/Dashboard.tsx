@@ -3,13 +3,15 @@ import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiService, AttendanceRecord, LeaveRequest } from "@/services/api";
+import { apiService, AttendanceRecord, LeaveRequest, PayrollRecord, OvertimeRecord } from "@/services/api";
 import CheckInOut from "@/components/dashboard/CheckInOut";
 import AttendanceCard from "@/components/dashboard/AttendanceCard";
 import ActivityLog from "@/components/dashboard/ActivityLog";
 import ProfileCard from "@/components/dashboard/ProfileCard";
 import LeaveRequestForm from "@/components/dashboard/LeaveRequestForm";
 import LeaveHistory from "@/components/dashboard/LeaveHistory";
+import PayrollSummary from "@/components/dashboard/PayrollSummary";
+import OvertimeTracker from "@/components/dashboard/OvertimeTracker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -18,6 +20,8 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
+  const [overtimeRecords, setOvertimeRecords] = useState<OvertimeRecord[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Redirect if not logged in
@@ -27,20 +31,24 @@ export default function Dashboard() {
     }
   }, [user, navigate]);
   
-  // Fetch attendance records and leave requests
+  // Fetch attendance records, leave requests, payroll records, and overtime records
   useEffect(() => {
     const fetchData = async () => {
       try {
         if (!user) return;
         
         setLoading(true);
-        const [records, leaves] = await Promise.all([
+        const [attendance, leaves, payroll, overtime] = await Promise.all([
           apiService.getUserAttendance(user.id),
-          apiService.getUserLeaveRequests(user.id)
+          apiService.getUserLeaveRequests(user.id),
+          apiService.getUserPayroll(user.id),
+          apiService.getUserOvertime(user.id)
         ]);
         
-        setAttendanceRecords(records);
+        setAttendanceRecords(attendance);
         setLeaveRequests(leaves);
+        setPayrollRecords(payroll);
+        setOvertimeRecords(overtime);
       } catch (error) {
         console.error("Failed to fetch user data", error);
       } finally {
@@ -65,18 +73,22 @@ export default function Dashboard() {
   
   const isCheckedIn = !!(todayRecord && !todayRecord.checkOut);
   
-  // Refresh attendance records and leave requests
+  // Refresh all data
   const refreshData = async () => {
     if (!user) return;
     
     try {
-      const [records, leaves] = await Promise.all([
+      const [attendance, leaves, payroll, overtime] = await Promise.all([
         apiService.getUserAttendance(user.id),
-        apiService.getUserLeaveRequests(user.id)
+        apiService.getUserLeaveRequests(user.id),
+        apiService.getUserPayroll(user.id),
+        apiService.getUserOvertime(user.id)
       ]);
       
-      setAttendanceRecords(records);
+      setAttendanceRecords(attendance);
       setLeaveRequests(leaves);
+      setPayrollRecords(payroll);
+      setOvertimeRecords(overtime);
     } catch (error) {
       console.error("Failed to refresh data", error);
     }
@@ -97,6 +109,7 @@ export default function Dashboard() {
         <Tabs defaultValue="attendance" className="space-y-6">
           <TabsList className="mb-2">
             <TabsTrigger value="attendance">Attendance</TabsTrigger>
+            <TabsTrigger value="payroll">Payroll & Overtime</TabsTrigger>
             <TabsTrigger value="leave">Leave & Absence</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
           </TabsList>
@@ -120,6 +133,20 @@ export default function Dashboard() {
                   <ActivityLog records={attendanceRecords} />
                 </div>
               </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="payroll">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <PayrollSummary 
+                payrollRecords={payrollRecords} 
+                loading={loading} 
+              />
+              <OvertimeTracker 
+                overtimeRecords={overtimeRecords}
+                onOvertimeSubmit={refreshData}
+                loading={loading}
+              />
             </div>
           </TabsContent>
           
