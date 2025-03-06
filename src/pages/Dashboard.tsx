@@ -10,6 +10,7 @@ import ActivityLog from "@/components/dashboard/ActivityLog";
 import ProfileCard from "@/components/dashboard/ProfileCard";
 import LeaveRequestForm from "@/components/dashboard/LeaveRequestForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Dashboard() {
   const { user } = useAuth();
