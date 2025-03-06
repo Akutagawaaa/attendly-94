@@ -7,6 +7,9 @@ import { apiService, AttendanceRecord } from "@/services/api";
 import CheckInOut from "@/components/dashboard/CheckInOut";
 import AttendanceCard from "@/components/dashboard/AttendanceCard";
 import ActivityLog from "@/components/dashboard/ActivityLog";
+import ProfileCard from "@/components/dashboard/ProfileCard";
+import LeaveRequestForm from "@/components/dashboard/LeaveRequestForm";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -78,25 +81,59 @@ export default function Dashboard() {
           <p className="text-muted-foreground">{new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1">
-            <CheckInOut
-              onCheckInOut={refreshAttendance}
-              checkedIn={isCheckedIn}
-              lastCheckIn={todayRecord?.checkIn || null}
-            />
-          </div>
+        <Tabs defaultValue="attendance" className="space-y-6">
+          <TabsList className="mb-2">
+            <TabsTrigger value="attendance">Attendance</TabsTrigger>
+            <TabsTrigger value="profile">Profile</TabsTrigger>
+            <TabsTrigger value="leave">Leave Requests</TabsTrigger>
+          </TabsList>
           
-          <div className="lg:col-span-2">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
-              <AttendanceCard
-                todayRecord={todayRecord || null}
-                weeklyRecords={attendanceRecords}
-              />
-              <ActivityLog records={attendanceRecords} />
+          <TabsContent value="attendance">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <CheckInOut
+                  onCheckInOut={refreshAttendance}
+                  checkedIn={isCheckedIn}
+                  lastCheckIn={todayRecord?.checkIn || null}
+                />
+              </div>
+              
+              <div className="lg:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full">
+                  <AttendanceCard
+                    todayRecord={todayRecord || null}
+                    weeklyRecords={attendanceRecords}
+                  />
+                  <ActivityLog records={attendanceRecords} />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </TabsContent>
+          
+          <TabsContent value="profile">
+            <ProfileCard />
+          </TabsContent>
+          
+          <TabsContent value="leave">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div>
+                <LeaveRequestForm />
+              </div>
+              <div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base font-medium">Leave History</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-center py-8 text-muted-foreground">
+                      <p>No leave requests found</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </Layout>
   );

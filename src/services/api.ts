@@ -10,6 +10,18 @@ export interface AttendanceRecord {
   checkOut: Date | null;
 }
 
+// Mock leave request interface
+export interface LeaveRequest {
+  id: number;
+  employeeId: number;
+  startDate: Date;
+  endDate: Date;
+  type: string;
+  reason: string;
+  status: "pending" | "approved" | "rejected";
+  createdAt: Date;
+}
+
 // Mock API service
 class ApiService {
   // Get the current user's attendance records
@@ -113,6 +125,27 @@ class ApiService {
     localStorage.setItem("mockAttendanceData", JSON.stringify(mockData));
     
     return existingRecord;
+  }
+
+  // Create a leave request
+  async createLeaveRequest(leaveRequest: Omit<LeaveRequest, 'id' | 'status' | 'createdAt'>): Promise<LeaveRequest> {
+    // Simulate API call delay
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
+    const storedRequests = localStorage.getItem("mockLeaveRequests");
+    const leaveRequests: LeaveRequest[] = storedRequests ? JSON.parse(storedRequests) : [];
+    
+    const newRequest: LeaveRequest = {
+      id: leaveRequests.length + 1,
+      ...leaveRequest,
+      status: "pending",
+      createdAt: new Date(),
+    };
+    
+    leaveRequests.push(newRequest);
+    localStorage.setItem("mockLeaveRequests", JSON.stringify(leaveRequests));
+    
+    return newRequest;
   }
 
   // Private helper to get or initialize mock data

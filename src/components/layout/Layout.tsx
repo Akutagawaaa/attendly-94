@@ -2,8 +2,6 @@
 import React from "react";
 import Header from "./Header";
 import { useLocation } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { useAuth } from "@/context/AuthContext";
 
 interface LayoutProps {
@@ -31,9 +29,6 @@ export default function Layout({ children }: LayoutProps) {
           {children}
         </div>
       </main>
-      
-      <Toaster />
-      <Sonner />
     </div>
   );
 }

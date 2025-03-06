@@ -7,6 +7,7 @@ import { apiService, AttendanceRecord } from "@/services/api";
 import { User } from "@/context/AuthContext";
 import AttendanceStats from "@/components/admin/AttendanceStats";
 import EmployeeTable from "@/components/admin/EmployeeTable";
+import ReportsPanel from "@/components/admin/ReportsPanel";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -77,7 +78,7 @@ export default function Admin() {
         <Tabs defaultValue="employees" className="space-y-4">
           <TabsList>
             <TabsTrigger value="employees">Employees</TabsTrigger>
-            <TabsTrigger value="reports" disabled>Reports</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="settings" disabled>Settings</TabsTrigger>
           </TabsList>
           
@@ -89,9 +90,7 @@ export default function Admin() {
           </TabsContent>
           
           <TabsContent value="reports">
-            <div className="p-8 text-center text-muted-foreground border rounded-lg">
-              Reports feature coming soon
-            </div>
+            <ReportsPanel />
           </TabsContent>
           
           <TabsContent value="settings">
