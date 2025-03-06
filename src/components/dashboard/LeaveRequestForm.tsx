@@ -11,6 +11,7 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { apiService } from "@/services/api";
 
 const leaveTypes = [
   { value: "annual", label: "Annual Leave" },
@@ -19,7 +20,11 @@ const leaveTypes = [
   { value: "unpaid", label: "Unpaid Leave" },
 ];
 
-export default function LeaveRequestForm() {
+interface LeaveRequestFormProps {
+  onSubmit?: () => void;
+}
+
+export default function LeaveRequestForm({ onSubmit }: LeaveRequestFormProps) {
   const { user } = useAuth();
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
@@ -43,11 +48,17 @@ export default function LeaveRequestForm() {
     try {
       setIsSubmitting(true);
       
-      // Mock API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
       
-      // In a real app, you would send the data to your API
-      // await api.post('/leave-requests', { startDate, endDate, leaveType, reason, employeeId: user?.id });
+      await apiService.createLeaveRequest({
+        employeeId: user.id,
+        startDate,
+        endDate,
+        type: leaveType,
+        reason
+      });
       
       toast.success("Leave request submitted successfully");
       
@@ -56,6 +67,11 @@ export default function LeaveRequestForm() {
       setEndDate(undefined);
       setLeaveType("");
       setReason("");
+      
+      // Call onSubmit callback if provided
+      if (onSubmit) {
+        onSubmit();
+      }
     } catch (error) {
       console.error("Failed to submit leave request", error);
       toast.error("Failed to submit leave request");
@@ -109,6 +125,7 @@ export default function LeaveRequestForm() {
                     selected={startDate}
                     onSelect={setStartDate}
                     initialFocus
+                    className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
@@ -135,6 +152,7 @@ export default function LeaveRequestForm() {
                     selected={endDate}
                     onSelect={setEndDate}
                     initialFocus
+                    className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>

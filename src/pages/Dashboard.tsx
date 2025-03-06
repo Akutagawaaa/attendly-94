@@ -3,12 +3,13 @@ import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { apiService, AttendanceRecord } from "@/services/api";
+import { apiService, AttendanceRecord, LeaveRequest } from "@/services/api";
 import CheckInOut from "@/components/dashboard/CheckInOut";
 import AttendanceCard from "@/components/dashboard/AttendanceCard";
 import ActivityLog from "@/components/dashboard/ActivityLog";
 import ProfileCard from "@/components/dashboard/ProfileCard";
 import LeaveRequestForm from "@/components/dashboard/LeaveRequestForm";
+import LeaveHistory from "@/components/dashboard/LeaveHistory";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -16,6 +17,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Redirect if not logged in
@@ -25,23 +27,28 @@ export default function Dashboard() {
     }
   }, [user, navigate]);
   
-  // Fetch attendance records
+  // Fetch attendance records and leave requests
   useEffect(() => {
-    const fetchAttendance = async () => {
+    const fetchData = async () => {
       try {
         if (!user) return;
         
         setLoading(true);
-        const records = await apiService.getUserAttendance(user.id);
+        const [records, leaves] = await Promise.all([
+          apiService.getUserAttendance(user.id),
+          apiService.getUserLeaveRequests(user.id)
+        ]);
+        
         setAttendanceRecords(records);
+        setLeaveRequests(leaves);
       } catch (error) {
-        console.error("Failed to fetch attendance", error);
+        console.error("Failed to fetch user data", error);
       } finally {
         setLoading(false);
       }
     };
     
-    fetchAttendance();
+    fetchData();
   }, [user]);
   
   // Check if user is checked in today
@@ -58,15 +65,20 @@ export default function Dashboard() {
   
   const isCheckedIn = !!(todayRecord && !todayRecord.checkOut);
   
-  // Refresh attendance records
-  const refreshAttendance = async () => {
+  // Refresh attendance records and leave requests
+  const refreshData = async () => {
     if (!user) return;
     
     try {
-      const records = await apiService.getUserAttendance(user.id);
+      const [records, leaves] = await Promise.all([
+        apiService.getUserAttendance(user.id),
+        apiService.getUserLeaveRequests(user.id)
+      ]);
+      
       setAttendanceRecords(records);
+      setLeaveRequests(leaves);
     } catch (error) {
-      console.error("Failed to refresh attendance", error);
+      console.error("Failed to refresh data", error);
     }
   };
   
@@ -85,15 +97,15 @@ export default function Dashboard() {
         <Tabs defaultValue="attendance" className="space-y-6">
           <TabsList className="mb-2">
             <TabsTrigger value="attendance">Attendance</TabsTrigger>
+            <TabsTrigger value="leave">Leave & Absence</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
-            <TabsTrigger value="leave">Leave Requests</TabsTrigger>
           </TabsList>
           
           <TabsContent value="attendance">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-1">
                 <CheckInOut
-                  onCheckInOut={refreshAttendance}
+                  onCheckInOut={refreshData}
                   checkedIn={isCheckedIn}
                   lastCheckIn={todayRecord?.checkIn || null}
                 />
@@ -111,28 +123,19 @@ export default function Dashboard() {
             </div>
           </TabsContent>
           
-          <TabsContent value="profile">
-            <ProfileCard />
-          </TabsContent>
-          
           <TabsContent value="leave">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div>
-                <LeaveRequestForm />
+                <LeaveRequestForm onSubmit={refreshData} />
               </div>
               <div>
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base font-medium">Leave History</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p>No leave requests found</p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <LeaveHistory leaveRequests={leaveRequests} loading={loading} />
               </div>
             </div>
+          </TabsContent>
+          
+          <TabsContent value="profile">
+            <ProfileCard />
           </TabsContent>
         </Tabs>
       </div>

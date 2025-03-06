@@ -1,4 +1,3 @@
-
 import { User } from "@/context/AuthContext";
 
 // Mock attendance record interface
@@ -132,8 +131,7 @@ class ApiService {
     // Simulate API call delay
     await new Promise((resolve) => setTimeout(resolve, 800));
     
-    const storedRequests = localStorage.getItem("mockLeaveRequests");
-    const leaveRequests: LeaveRequest[] = storedRequests ? JSON.parse(storedRequests) : [];
+    const leaveRequests = this.getMockLeaveRequests();
     
     const newRequest: LeaveRequest = {
       id: leaveRequests.length + 1,
@@ -146,6 +144,47 @@ class ApiService {
     localStorage.setItem("mockLeaveRequests", JSON.stringify(leaveRequests));
     
     return newRequest;
+  }
+
+  // Get user leave requests
+  async getUserLeaveRequests(userId: number): Promise<LeaveRequest[]> {
+    // Simulate API call delay
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    
+    const leaveRequests = this.getMockLeaveRequests();
+    
+    // Filter by user ID
+    return leaveRequests
+      .filter(request => request.employeeId === userId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  // Get all leave requests (admin only)
+  async getAllLeaveRequests(): Promise<LeaveRequest[]> {
+    // Simulate API call delay
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    
+    return this.getMockLeaveRequests()
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  // Update leave request status (admin only)
+  async updateLeaveRequestStatus(id: number, status: "approved" | "rejected"): Promise<LeaveRequest> {
+    // Simulate API call delay
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
+    const leaveRequests = this.getMockLeaveRequests();
+    
+    const request = leaveRequests.find(req => req.id === id);
+    if (!request) {
+      throw new Error("Leave request not found");
+    }
+    
+    // Update status
+    request.status = status;
+    localStorage.setItem("mockLeaveRequests", JSON.stringify(leaveRequests));
+    
+    return request;
   }
 
   // Private helper to get or initialize mock data
@@ -204,6 +243,69 @@ class ApiService {
     ];
     
     localStorage.setItem("mockAttendanceData", JSON.stringify(mockData));
+    return mockData;
+  }
+
+  // Private helper to get or initialize mock leave requests
+  private getMockLeaveRequests(): LeaveRequest[] {
+    const storedData = localStorage.getItem("mockLeaveRequests");
+    
+    if (storedData) {
+      // Parse stored data and convert date strings back to Date objects
+      const parsedData = JSON.parse(storedData);
+      return parsedData.map((request: any) => ({
+        ...request,
+        startDate: new Date(request.startDate),
+        endDate: new Date(request.endDate),
+        createdAt: new Date(request.createdAt),
+      }));
+    }
+    
+    // Create initial mock data
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    
+    const threeDaysAgo = new Date(today);
+    threeDaysAgo.setDate(today.getDate() - 3);
+    
+    const nextWeek = new Date(today);
+    nextWeek.setDate(today.getDate() + 7);
+    
+    const mockData: LeaveRequest[] = [
+      {
+        id: 1,
+        employeeId: 1,
+        startDate: nextWeek,
+        endDate: new Date(nextWeek.getFullYear(), nextWeek.getMonth(), nextWeek.getDate() + 2),
+        type: "annual",
+        reason: "Family vacation",
+        status: "pending",
+        createdAt: yesterday,
+      },
+      {
+        id: 2,
+        employeeId: 1,
+        startDate: threeDaysAgo,
+        endDate: yesterday,
+        type: "sick",
+        reason: "Caught a cold",
+        status: "approved",
+        createdAt: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate() - 1),
+      },
+      {
+        id: 3,
+        employeeId: 2,
+        startDate: today,
+        endDate: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1),
+        type: "family",
+        reason: "Family emergency",
+        status: "approved",
+        createdAt: yesterday,
+      },
+    ];
+    
+    localStorage.setItem("mockLeaveRequests", JSON.stringify(mockData));
     return mockData;
   }
 }
