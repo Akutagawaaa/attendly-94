@@ -26,8 +26,8 @@ export default function CheckInOut({ onCheckInOut, checkedIn, lastCheckIn }: Che
       await apiService.checkIn(user.id);
       toast.success("Checked in successfully");
       onCheckInOut();
-    } catch (error) {
-      toast.error("Failed to check in");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to check in");
       console.error(error);
     } finally {
       setLoading(false);
@@ -38,10 +38,10 @@ export default function CheckInOut({ onCheckInOut, checkedIn, lastCheckIn }: Che
     try {
       setLoading(true);
       await apiService.checkOut(user.id);
-      toast.success("Checked out successfully");
+      toast.success("Checked out successfully. See you tomorrow!");
       onCheckInOut();
-    } catch (error) {
-      toast.error("Failed to check out");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to check out");
       console.error(error);
     } finally {
       setLoading(false);
@@ -58,10 +58,17 @@ export default function CheckInOut({ onCheckInOut, checkedIn, lastCheckIn }: Che
         <div className="flex flex-col items-center justify-center space-y-6">
           <div className="text-center">
             <p className="text-2xl font-semibold mb-1">{getCurrentTimeString()}</p>
-            <p className="text-sm text-muted-foreground">{new Date().toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p className="text-sm text-muted-foreground">
+              {new Date().toLocaleDateString([], { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </p>
           </div>
           
-          <div className="w-32 h-32 rounded-full bg-muted/30 border-4 border-primary/20 flex items-center justify-center relative animate-pulse-subtle overflow-hidden group">
+          <div className="w-32 h-32 rounded-full bg-muted/30 border-4 border-primary/20 flex items-center justify-center relative overflow-hidden group">
             <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors duration-300"></div>
             <Timer className="h-12 w-12 text-primary/80" />
           </div>

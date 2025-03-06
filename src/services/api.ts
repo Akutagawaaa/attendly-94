@@ -48,6 +48,9 @@ export interface OvertimeRecord {
   rate: number; // multiplier for overtime pay (e.g., 1.5x, 2x)
 }
 
+// Re-export the User type from AuthContext
+export { User } from "@/context/AuthContext";
+
 // Mock API service
 class ApiService {
   // Get the current user's attendance records
@@ -99,12 +102,19 @@ class ApiService {
       day: "numeric",
     });
     
-    // Check if already checked in today
-    const existingRecord = mockData.find(
-      (record) => record.employeeId === userId && record.date === formattedDate && !record.checkOut
+    // Check if already checked in today or has completed a check-in/out cycle
+    const todayRecords = mockData.filter(
+      (record) => record.employeeId === userId && record.date === formattedDate
     );
     
-    if (existingRecord) {
+    const hasCompletedCycle = todayRecords.some(record => record.checkOut !== null);
+    const hasActiveCheckIn = todayRecords.some(record => record.checkOut === null);
+    
+    if (hasCompletedCycle) {
+      throw new Error("You have already completed your check-in/out cycle for today");
+    }
+    
+    if (hasActiveCheckIn) {
       throw new Error("You have already checked in today");
     }
     
@@ -117,7 +127,6 @@ class ApiService {
       checkOut: null,
     };
     
-    // Add to mock data
     mockData.push(newRecord);
     localStorage.setItem("mockAttendanceData", JSON.stringify(mockData));
     
@@ -137,9 +146,12 @@ class ApiService {
       day: "numeric",
     });
     
-    // Find today's check-in record
+    // Find today's check-in record that hasn't been checked out
     const existingRecord = mockData.find(
-      (record) => record.employeeId === userId && record.date === formattedDate && !record.checkOut
+      (record) => 
+        record.employeeId === userId && 
+        record.date === formattedDate && 
+        !record.checkOut
     );
     
     if (!existingRecord) {
