@@ -1,6 +1,6 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { User, AttendanceRecord, LeaveRequest, PayrollRecord, OvertimeRecord } from "@/services/api";
+import { User, AttendanceRecord, LeaveRequest, PayrollRecord, OvertimeRecord } from "@/models/types";
 import EmployeeTable from "@/components/admin/EmployeeTable";
 import PayrollManagement from "@/components/admin/PayrollManagement";
 import OvertimeManagement from "@/components/admin/OvertimeManagement";
@@ -38,13 +38,13 @@ export default function AdminTabs({
 }: AdminTabsProps) {
   return (
     <Tabs defaultValue="employees" className="space-y-4">
-      <TabsList>
+      <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 w-full">
         <TabsTrigger value="employees">Employees</TabsTrigger>
         <TabsTrigger value="payroll">Payroll</TabsTrigger>
         <TabsTrigger value="overtime">Overtime</TabsTrigger>
         <TabsTrigger value="leave">Leave Requests</TabsTrigger>
         <TabsTrigger value="reports">Reports</TabsTrigger>
-        <TabsTrigger value="attendance-override">Attendance Override</TabsTrigger>
+        <TabsTrigger value="attendance-override">Attendance</TabsTrigger>
         <TabsTrigger value="registration">Registration</TabsTrigger>
       </TabsList>
       

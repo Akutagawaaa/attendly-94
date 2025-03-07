@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { OvertimeRecord, apiService, User } from "@/services/api";
+import { OvertimeRecord, User } from "@/models/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +17,7 @@ import {
 import { CheckCircle, Clock, FilterIcon, XCircle } from "lucide-react";
 import { formatDate } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
+import { overtimeService } from "@/services/overtimeService";
 
 interface OvertimeManagementProps {
   overtimeRecords: OvertimeRecord[];
@@ -27,8 +28,8 @@ interface OvertimeManagementProps {
 
 export default function OvertimeManagement({ overtimeRecords, employees, loading, onOvertimeUpdate }: OvertimeManagementProps) {
   const { user } = useAuth();
-  const [filterEmployee, setFilterEmployee] = useState<string>("");
-  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterEmployee, setFilterEmployee] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [processingId, setProcessingId] = useState<number | null>(null);
   
   const getEmployeeName = (employeeId: number) => {
@@ -52,7 +53,7 @@ export default function OvertimeManagement({ overtimeRecords, employees, loading
     
     try {
       setProcessingId(id);
-      await apiService.updateOvertimeStatus(id, "approved", user.id);
+      await overtimeService.updateOvertimeStatus(id, "approved", user.id);
       toast.success("Overtime request approved");
       onOvertimeUpdate();
     } catch (error) {
@@ -68,7 +69,7 @@ export default function OvertimeManagement({ overtimeRecords, employees, loading
     
     try {
       setProcessingId(id);
-      await apiService.updateOvertimeStatus(id, "rejected", user.id);
+      await overtimeService.updateOvertimeStatus(id, "rejected", user.id);
       toast.success("Overtime request rejected");
       onOvertimeUpdate();
     } catch (error) {
@@ -81,8 +82,8 @@ export default function OvertimeManagement({ overtimeRecords, employees, loading
   
   // Apply filters
   const filteredRecords = overtimeRecords.filter(record => {
-    if (filterEmployee && record.employeeId !== parseInt(filterEmployee)) return false;
-    if (filterStatus && record.status !== filterStatus) return false;
+    if (filterEmployee !== "all" && record.employeeId !== parseInt(filterEmployee)) return false;
+    if (filterStatus !== "all" && record.status !== filterStatus) return false;
     return true;
   });
   
@@ -109,7 +110,7 @@ export default function OvertimeManagement({ overtimeRecords, employees, loading
                   <SelectValue placeholder="All Employees" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Employees</SelectItem>
+                  <SelectItem value="all">All Employees</SelectItem>
                   {employees.map(employee => (
                     <SelectItem key={employee.id} value={employee.id.toString()}>{employee.name}</SelectItem>
                   ))}
@@ -123,7 +124,7 @@ export default function OvertimeManagement({ overtimeRecords, employees, loading
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Statuses</SelectItem>
+                  <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="approved">Approved</SelectItem>
                   <SelectItem value="rejected">Rejected</SelectItem>
@@ -132,8 +133,8 @@ export default function OvertimeManagement({ overtimeRecords, employees, loading
             </div>
             <div className="flex items-end ml-auto">
               <Button variant="outline" size="sm" onClick={() => {
-                setFilterEmployee("");
-                setFilterStatus("");
+                setFilterEmployee("all");
+                setFilterStatus("all");
               }}>
                 <FilterIcon className="h-4 w-4 mr-2" /> Clear Filters
               </Button>

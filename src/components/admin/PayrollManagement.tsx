@@ -1,5 +1,6 @@
+
 import { useState } from "react";
-import { PayrollRecord, apiService, User } from "@/services/api";
+import { PayrollRecord, User } from "@/models/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,7 @@ import { ArrowDownUp, BanknoteIcon, CalendarIcon, CheckCircle, FileText, Downloa
 import { formatDate, formatTime, formatTimeWithZone, getUserTimezone, exportToCSV } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { payrollService } from "@/services/payrollService";
 
 interface PayrollManagementProps {
   payrollRecords: PayrollRecord[];
@@ -30,9 +32,9 @@ interface PayrollManagementProps {
 export default function PayrollManagement({ payrollRecords, employees, loading, onPayrollUpdate }: PayrollManagementProps) {
   const [processingPayroll, setProcessingPayroll] = useState(false);
   const [markingAsPaid, setMarkingAsPaid] = useState<number | null>(null);
-  const [filterMonth, setFilterMonth] = useState<string>("");
-  const [filterYear, setFilterYear] = useState<string>("");
-  const [filterStatus, setFilterStatus] = useState<string>("");
+  const [filterMonth, setFilterMonth] = useState<string>("all");
+  const [filterYear, setFilterYear] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [selectedEmployee, setSelectedEmployee] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toLocaleString('default', { month: 'long' }));
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
@@ -70,7 +72,7 @@ export default function PayrollManagement({ payrollRecords, employees, loading, 
     
     try {
       setProcessingPayroll(true);
-      await apiService.processPayroll(
+      await payrollService.processPayroll(
         parseInt(selectedEmployee), 
         selectedMonth, 
         parseInt(selectedYear)
@@ -88,7 +90,7 @@ export default function PayrollManagement({ payrollRecords, employees, loading, 
   const handleMarkAsPaid = async (id: number) => {
     try {
       setMarkingAsPaid(id);
-      await apiService.markPayrollAsPaid(id);
+      await payrollService.markPayrollAsPaid(id);
       toast.success("Payroll marked as paid");
       onPayrollUpdate();
     } catch (error) {
@@ -174,9 +176,9 @@ export default function PayrollManagement({ payrollRecords, employees, loading, 
   const years = Array.from(new Set(payrollRecords.map(record => record.year)));
   
   const filteredRecords = payrollRecords.filter(record => {
-    if (filterMonth && record.month !== filterMonth) return false;
-    if (filterYear && record.year !== parseInt(filterYear)) return false;
-    if (filterStatus && record.status !== filterStatus) return false;
+    if (filterMonth !== "all" && record.month !== filterMonth) return false;
+    if (filterYear !== "all" && record.year !== parseInt(filterYear)) return false;
+    if (filterStatus !== "all" && record.status !== filterStatus) return false;
     return true;
   });
   
@@ -361,9 +363,9 @@ export default function PayrollManagement({ payrollRecords, employees, loading, 
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => {
-                setFilterMonth("");
-                setFilterYear("");
-                setFilterStatus("");
+                setFilterMonth("all");
+                setFilterYear("all");
+                setFilterStatus("all");
               }}>
                 Clear Filters
               </Button>
@@ -379,7 +381,7 @@ export default function PayrollManagement({ payrollRecords, employees, loading, 
                   <SelectValue placeholder="All Months" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Months</SelectItem>
+                  <SelectItem value="all">All Months</SelectItem>
                   {months.map(month => (
                     <SelectItem key={month} value={month}>{month}</SelectItem>
                   ))}
@@ -393,7 +395,7 @@ export default function PayrollManagement({ payrollRecords, employees, loading, 
                   <SelectValue placeholder="All Years" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Years</SelectItem>
+                  <SelectItem value="all">All Years</SelectItem>
                   {years.map(year => (
                     <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
                   ))}
@@ -407,7 +409,7 @@ export default function PayrollManagement({ payrollRecords, employees, loading, 
                   <SelectValue placeholder="All Statuses" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Statuses</SelectItem>
+                  <SelectItem value="all">All Statuses</SelectItem>
                   <SelectItem value="draft">Draft</SelectItem>
                   <SelectItem value="processed">Processed</SelectItem>
                   <SelectItem value="paid">Paid</SelectItem>

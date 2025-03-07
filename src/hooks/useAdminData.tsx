@@ -1,8 +1,13 @@
 
 import { useState, useEffect } from "react";
-import { apiService, User, AttendanceRecord, LeaveRequest, PayrollRecord, OvertimeRecord } from "@/services/api";
+import { User, AttendanceRecord, LeaveRequest, PayrollRecord, OvertimeRecord } from "@/models/types";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
+import { userService } from "@/services/userService";
+import { attendanceService } from "@/services/attendanceService";
+import { leaveService } from "@/services/leaveService";
+import { payrollService } from "@/services/payrollService";
+import { overtimeService } from "@/services/overtimeService";
 
 export function useAdminData() {
   const { user, isAdmin } = useAuth();
@@ -13,6 +18,29 @@ export function useAdminData() {
   const [overtimeRecords, setOvertimeRecords] = useState<OvertimeRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Initialize mock data if it doesn't exist
+  const initializeMockData = () => {
+    // Initialize payroll data if not exists
+    if (!localStorage.getItem("mockPayrollData")) {
+      localStorage.setItem("mockPayrollData", JSON.stringify([]));
+    }
+    
+    // Initialize overtime data if not exists
+    if (!localStorage.getItem("mockOvertimeData")) {
+      localStorage.setItem("mockOvertimeData", JSON.stringify([]));
+    }
+    
+    // Initialize attendance data if not exists
+    if (!localStorage.getItem("mockAttendanceData")) {
+      localStorage.setItem("mockAttendanceData", JSON.stringify([]));
+    }
+    
+    // Initialize leave requests if not exists
+    if (!localStorage.getItem("mockLeaveRequests")) {
+      localStorage.setItem("mockLeaveRequests", JSON.stringify([]));
+    }
+  };
+
   // Fetch employees, attendance records, leave requests, payroll records, and overtime records
   useEffect(() => {
     const fetchData = async () => {
@@ -21,25 +49,18 @@ export function useAdminData() {
         
         setLoading(true);
         
-        // Ensure local storage has the necessary mock data structures
-        if (!localStorage.getItem("mockPayrollData")) {
-          localStorage.setItem("mockPayrollData", JSON.stringify([]));
-        }
-        
-        if (!localStorage.getItem("mockOvertimeData")) {
-          localStorage.setItem("mockOvertimeData", JSON.stringify([]));
-        }
+        // Initialize mock data structures if they don't exist
+        initializeMockData();
         
         const [employeeData, attendanceData, leaveData, payrollData, overtimeData] = await Promise.all([
-          apiService.getAllEmployees(),
-          apiService.getAllAttendance(),
-          apiService.getAllLeaveRequests(),
-          apiService.getAllPayroll(),
-          apiService.getAllOvertime()
+          userService.getAllEmployees(),
+          attendanceService.getAllAttendance(),
+          leaveService.getAllLeaveRequests(),
+          payrollService.getAllPayroll(),
+          overtimeService.getAllOvertime()
         ]);
         
-        // Handle type conversion properly
-        setEmployees(employeeData as User[]);
+        setEmployees(employeeData);
         setAttendanceRecords(attendanceData);
         setLeaveRequests(leaveData);
         setPayrollRecords(payrollData);
@@ -58,10 +79,10 @@ export function useAdminData() {
   // Update leave request status
   const handleLeaveStatusUpdate = async (id: number, status: "approved" | "rejected") => {
     try {
-      await apiService.updateLeaveRequestStatus(id, status);
+      await leaveService.updateLeaveRequestStatus(id, status);
       
       // Refresh leave requests
-      const updatedLeaveRequests = await apiService.getAllLeaveRequests();
+      const updatedLeaveRequests = await leaveService.getAllLeaveRequests();
       setLeaveRequests(updatedLeaveRequests);
       
       toast.success(`Leave request ${status} successfully`);
@@ -76,7 +97,7 @@ export function useAdminData() {
     if (!user || !isAdmin) return;
     
     try {
-      const updatedPayrollRecords = await apiService.getAllPayroll();
+      const updatedPayrollRecords = await payrollService.getAllPayroll();
       setPayrollRecords(updatedPayrollRecords);
       toast.success("Payroll data refreshed");
     } catch (error) {
@@ -90,7 +111,7 @@ export function useAdminData() {
     if (!user || !isAdmin) return;
     
     try {
-      const updatedOvertimeRecords = await apiService.getAllOvertime();
+      const updatedOvertimeRecords = await overtimeService.getAllOvertime();
       setOvertimeRecords(updatedOvertimeRecords);
       toast.success("Overtime data refreshed");
     } catch (error) {
@@ -104,11 +125,12 @@ export function useAdminData() {
     if (!user || !isAdmin) return;
     
     try {
-      const updatedAttendanceRecords = await apiService.getAllAttendance();
+      const updatedAttendanceRecords = await attendanceService.getAllAttendance();
       setAttendanceRecords(updatedAttendanceRecords);
       toast.success("Attendance records updated successfully");
     } catch (error) {
       console.error("Failed to refresh attendance data", error);
+      toast.error("Failed to refresh attendance data");
     }
   };
 
