@@ -1,4 +1,3 @@
-
 import { formatDate } from "@/lib/utils";
 
 export interface User {
@@ -8,6 +7,7 @@ export interface User {
   password?: string;
   role: "admin" | "employee";
   department: string;
+  avatarUrl?: string;
 }
 
 export interface AttendanceRecord {
@@ -55,7 +55,6 @@ export interface OvertimeRecord {
   approvedBy?: number | null;
 }
 
-// Add types for employee registration
 export interface EmployeeRegistration {
   name: string;
   email: string;
@@ -82,7 +81,6 @@ export const apiService = {
   },
   
   async logout(): Promise<void> {
-    // In a real app, you might clear tokens or session data here
     return Promise.resolve();
   },
   
@@ -190,7 +188,7 @@ export const apiService = {
       endDate: request.endDate,
       reason: request.reason,
       status: "pending",
-      type: "annual", // Default type
+      type: "annual",
       createdAt: new Date().toISOString(),
     };
     
@@ -229,13 +227,11 @@ export const apiService = {
   },
   
   async processPayroll(employeeId: number, month: string, year: number): Promise<PayrollRecord> {
-    // Fetch employee data
     const employee = await this.getEmployeeById(employeeId);
     if (!employee) {
       throw new Error("Employee not found");
     }
     
-    // Mock calculation
     const baseSalary = 5000;
     const overtimePay = 500;
     const bonus = 100;
@@ -256,7 +252,6 @@ export const apiService = {
       processedDate: new Date().toISOString(),
     };
     
-    // Save to localStorage
     const storedPayroll = localStorage.getItem("mockPayrollData");
     const payrollData: PayrollRecord[] = storedPayroll ? JSON.parse(storedPayroll) : [];
     payrollData.push(newPayroll);
@@ -336,7 +331,6 @@ export const apiService = {
   async checkIn(userId: number): Promise<AttendanceRecord> {
     const today = formatDate(new Date());
     
-    // Check if user has already checked in today
     const attendanceRecords = await this.getAllAttendance();
     const existingRecord = attendanceRecords.find(
       record => record.employeeId === userId && record.date === today
@@ -346,7 +340,6 @@ export const apiService = {
       throw new Error("You have already checked in today");
     }
     
-    // Create new attendance record
     const newRecord: AttendanceRecord = {
       id: Math.floor(Math.random() * 10000),
       employeeId: userId,
@@ -363,7 +356,6 @@ export const apiService = {
   async checkOut(userId: number): Promise<AttendanceRecord | null> {
     const today = formatDate(new Date());
     
-    // Get today's attendance record
     const attendanceRecords = await this.getAllAttendance();
     const recordIndex = attendanceRecords.findIndex(
       record => record.employeeId === userId && record.date === today && record.checkIn && !record.checkOut
@@ -373,7 +365,6 @@ export const apiService = {
       throw new Error("No active check-in found for today");
     }
     
-    // Update record with check-out time
     attendanceRecords[recordIndex].checkOut = new Date().toISOString();
     localStorage.setItem("mockAttendanceData", JSON.stringify(attendanceRecords));
     return attendanceRecords[recordIndex];
@@ -386,7 +377,6 @@ export const apiService = {
   async adminOverrideCheckIn(employeeId: number, checkInTime: Date, adminId: number): Promise<AttendanceRecord | null> {
     const today = formatDate(new Date());
     
-    // Get existing attendance records for the day
     const attendanceRecords = await this.getAllAttendance();
     const existingRecord = attendanceRecords.find(
       record => 
@@ -395,12 +385,10 @@ export const apiService = {
     );
     
     if (existingRecord) {
-      // Update existing record
       existingRecord.checkIn = checkInTime.toISOString();
       await this.updateAttendanceRecord(existingRecord.id, existingRecord);
       return existingRecord;
     } else {
-      // Create a new record
       const newRecord: AttendanceRecord = {
         id: Math.floor(Math.random() * 10000),
         employeeId: employeeId,
@@ -418,7 +406,6 @@ export const apiService = {
   async adminOverrideCheckOut(employeeId: number, checkOutTime: Date, adminId: number): Promise<AttendanceRecord | null> {
     const today = formatDate(new Date());
     
-    // Get existing attendance records for the day
     const attendanceRecords = await this.getAllAttendance();
     const existingRecord = attendanceRecords.find(
       record => 
@@ -427,12 +414,10 @@ export const apiService = {
     );
     
     if (existingRecord) {
-      // Update existing record
       existingRecord.checkOut = checkOutTime.toISOString();
       await this.updateAttendanceRecord(existingRecord.id, existingRecord);
       return existingRecord;
     } else {
-      // Create a new record
       const newRecord: AttendanceRecord = {
         id: Math.floor(Math.random() * 10000),
         employeeId: employeeId,
@@ -446,29 +431,24 @@ export const apiService = {
       return newRecord;
     }
   },
-  // Employee Registration
+  
   async registerEmployee(data: EmployeeRegistration): Promise<User> {
-    // In a real app, this would make an API call to register the employee
-    console.log("Registering employee:", data);
-    
-    // For our mock implementation, save to localStorage
     const storedUsers = localStorage.getItem("mockUsers");
     let users = storedUsers ? JSON.parse(storedUsers) : [];
     
-    // Check if email already exists
     const emailExists = users.some((user: any) => user.email === data.email);
     if (emailExists) {
       throw new Error("Email already registered");
     }
     
-    // Create new user
     const newUser: User = {
-      id: Math.floor(Math.random() * 10000) + 10, // Ensure it doesn't conflict with existing IDs
+      id: Math.floor(Math.random() * 10000) + 10,
       name: data.name,
       email: data.email,
-      password: data.password, // In a real app, this would be hashed
+      password: data.password,
       role: data.role,
       department: data.department,
+      avatarUrl: data.avatarUrl,
     };
     
     users.push(newUser);
@@ -477,9 +457,7 @@ export const apiService = {
     return newUser;
   },
   
-  // Registration Codes
   async createRegistrationCode(code: string, expiryDays: number): Promise<RegistrationCode> {
-    // Set expiry date
     const expiryDate = new Date();
     expiryDate.setDate(expiryDate.getDate() + expiryDays);
     
@@ -489,7 +467,6 @@ export const apiService = {
       isUsed: false
     };
     
-    // Store in localStorage for our mock implementation
     const storedCodes = localStorage.getItem("mockRegistrationCodes");
     const codes = storedCodes ? JSON.parse(storedCodes) : [];
     codes.push(registrationCode);
@@ -499,24 +476,17 @@ export const apiService = {
   },
   
   async validateRegistrationCode(code: string): Promise<boolean> {
-    // Get codes from localStorage
     const storedCodes = localStorage.getItem("mockRegistrationCodes");
     if (!storedCodes) return false;
     
     const codes: RegistrationCode[] = JSON.parse(storedCodes);
     const registrationCode = codes.find(c => c.code === code);
     
-    // Check if code exists, is not used, and has not expired
     if (!registrationCode) return false;
     if (registrationCode.isUsed) return false;
     
     const expiryDate = new Date(registrationCode.expiryDate);
     if (expiryDate < new Date()) return false;
     
-    // Mark code as used
-    registrationCode.isUsed = true;
-    localStorage.setItem("mockRegistrationCodes", JSON.stringify(codes));
-    
-    return true;
-  },
-};
+    registration
+

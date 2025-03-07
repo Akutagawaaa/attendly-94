@@ -14,7 +14,10 @@ export default function AttendanceCard({ todayRecord, weeklyRecords }: Attendanc
   // Calculate weekly hours
   const totalWeeklyHours = weeklyRecords.reduce((total, record) => {
     if (record.checkIn && record.checkOut) {
-      const duration = (record.checkOut.getTime() - record.checkIn.getTime()) / (1000 * 60 * 60);
+      // Convert string dates to Date objects before using getTime()
+      const checkInDate = new Date(record.checkIn);
+      const checkOutDate = new Date(record.checkOut);
+      const duration = (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60);
       return total + duration;
     }
     return total;
@@ -29,7 +32,7 @@ export default function AttendanceCard({ todayRecord, weeklyRecords }: Attendanc
   // Get today's duration if checked in
   const todayDuration = todayRecord && todayRecord.checkIn 
     ? (todayRecord.checkOut 
-      ? getDuration(todayRecord.checkIn, todayRecord.checkOut)
+      ? getDuration(new Date(todayRecord.checkIn), new Date(todayRecord.checkOut))
       : "Currently working")
     : "Not checked in";
   
@@ -66,13 +69,13 @@ export default function AttendanceCard({ todayRecord, weeklyRecords }: Attendanc
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Check in</span>
                 <span className="font-medium">
-                  {todayRecord?.checkIn ? formatTime(todayRecord.checkIn) : "—"}
+                  {todayRecord?.checkIn ? formatTime(new Date(todayRecord.checkIn)) : "—"}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Check out</span>
                 <span className="font-medium">
-                  {todayRecord?.checkOut ? formatTime(todayRecord.checkOut) : "—"}
+                  {todayRecord?.checkOut ? formatTime(new Date(todayRecord.checkOut)) : "—"}
                 </span>
               </div>
               <div className="flex justify-between">

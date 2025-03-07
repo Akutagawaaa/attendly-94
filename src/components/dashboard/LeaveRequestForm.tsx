@@ -39,15 +39,13 @@ export default function LeaveRequestForm({ onSubmit }: LeaveRequestFormProps) {
     try {
       setIsSubmitting(true);
       
-      // Add leaveType to the request creation
-      const requestData = {
+      // Add employeeId to the request
+      await apiService.createLeaveRequest({
         startDate: date.from.toISOString(),
         endDate: date.to.toISOString(),
         reason,
-        type: leaveType,
-      };
-      
-      await apiService.createLeaveRequest(requestData, user.id);
+        employeeId: user.id  // Add the missing employeeId property
+      }, user.id);
       
       toast.success("Leave request submitted successfully");
       setDate({
