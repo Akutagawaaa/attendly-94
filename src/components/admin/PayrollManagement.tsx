@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { PayrollRecord, apiService, User, AttendanceRecord } from "@/services/api";
+import { PayrollRecord, apiService, User } from "@/services/api";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,7 +37,6 @@ export default function PayrollManagement({ payrollRecords, employees, loading, 
   const [selectedMonth, setSelectedMonth] = useState<string>(new Date().toLocaleString('default', { month: 'long' }));
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   
-  // Attendance override states
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(null);
   const [overrideDate, setOverrideDate] = useState<string>(new Date().toISOString().split('T')[0]);
   const [checkInTime, setCheckInTime] = useState<string>("09:00");
@@ -108,7 +106,6 @@ export default function PayrollManagement({ payrollRecords, employees, loading, 
     }
     
     try {
-      // Create date objects from the input
       const date = new Date(overrideDate);
       const formattedDate = formatDate(date);
       
@@ -120,41 +117,17 @@ export default function PayrollManagement({ payrollRecords, employees, loading, 
       const [checkOutHours, checkOutMinutes] = checkOutTime.split(':').map(Number);
       checkOutDateTime.setHours(checkOutHours, checkOutMinutes, 0, 0);
       
-      // Get existing attendance records for the day
-      const attendanceRecords = await apiService.getAllAttendance();
-      const existingRecord = attendanceRecords.find(
-        record => 
-          record.employeeId === selectedEmployeeId && 
-          record.date === formattedDate
+      const storedData = localStorage.getItem("mockAttendanceData");
+      let records = storedData ? JSON.parse(storedData) : [];
+      
+      const existingRecordIndex = records.findIndex(
+        (r: any) => r.employeeId === selectedEmployeeId && r.date === formattedDate
       );
       
-      // If record exists, manually "override" by removing and recreating
-      if (existingRecord) {
-        // This is a mock implementation - in a real API, you would have an override endpoint
-        // For our demo, we'll simulate by manually updating localStorage
-        const storedData = localStorage.getItem("mockAttendanceData");
-        if (storedData) {
-          let records = JSON.parse(storedData);
-          // Remove the existing record
-          records = records.filter((r: any) => r.id !== existingRecord.id);
-          
-          // Add the new record with the same ID
-          const updatedRecord = {
-            id: existingRecord.id,
-            employeeId: selectedEmployeeId,
-            date: formattedDate,
-            checkIn: checkInDateTime.toISOString(),
-            checkOut: checkOutDateTime.toISOString(),
-          };
-          records.push(updatedRecord);
-          
-          // Save back to localStorage
-          localStorage.setItem("mockAttendanceData", JSON.stringify(records));
-          
-          toast.success("Attendance record overridden successfully");
-        }
+      if (existingRecordIndex !== -1) {
+        records[existingRecordIndex].checkIn = checkInDateTime.toISOString();
+        records[existingRecordIndex].checkOut = checkOutDateTime.toISOString();
       } else {
-        // Create a new record
         const newRecord = {
           id: Math.floor(Math.random() * 10000),
           employeeId: selectedEmployeeId,
@@ -162,14 +135,11 @@ export default function PayrollManagement({ payrollRecords, employees, loading, 
           checkIn: checkInDateTime.toISOString(),
           checkOut: checkOutDateTime.toISOString(),
         };
-        
-        const storedData = localStorage.getItem("mockAttendanceData");
-        let records = storedData ? JSON.parse(storedData) : [];
         records.push(newRecord);
-        localStorage.setItem("mockAttendanceData", JSON.stringify(records));
-        
-        toast.success("Attendance record created successfully");
       }
+      
+      localStorage.setItem("mockAttendanceData", JSON.stringify(records));
+      toast.success("Attendance record updated successfully");
     } catch (error) {
       console.error("Failed to override attendance", error);
       toast.error("Failed to override attendance");
@@ -200,11 +170,9 @@ export default function PayrollManagement({ payrollRecords, employees, loading, 
     }
   };
   
-  // Get unique months, years, and statuses for filtering
   const months = Array.from(new Set(payrollRecords.map(record => record.month)));
   const years = Array.from(new Set(payrollRecords.map(record => record.year)));
   
-  // Apply filters
   const filteredRecords = payrollRecords.filter(record => {
     if (filterMonth && record.month !== filterMonth) return false;
     if (filterYear && record.year !== parseInt(filterYear)) return false;
@@ -212,7 +180,6 @@ export default function PayrollManagement({ payrollRecords, employees, loading, 
     return true;
   });
   
-  // Months for processing new payroll
   const currentDate = new Date();
   const currentMonth = currentDate.toLocaleString('default', { month: 'long' });
   const currentYear = currentDate.getFullYear();

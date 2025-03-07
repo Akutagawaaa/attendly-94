@@ -1,4 +1,3 @@
-
 import { formatDate } from "@/lib/utils";
 
 export interface User {
@@ -62,6 +61,7 @@ export interface EmployeeRegistration {
   password: string;
   department: string;
   role: "admin" | "employee";
+  avatarUrl?: string;
 }
 
 export interface RegistrationCode {

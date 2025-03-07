@@ -1,4 +1,3 @@
-
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
@@ -51,6 +50,16 @@ export default function Admin() {
         if (!user || !isAdmin) return;
         
         setLoading(true);
+        
+        // Ensure local storage has the necessary mock data structures
+        if (!localStorage.getItem("mockPayrollData")) {
+          localStorage.setItem("mockPayrollData", JSON.stringify([]));
+        }
+        
+        if (!localStorage.getItem("mockOvertimeData")) {
+          localStorage.setItem("mockOvertimeData", JSON.stringify([]));
+        }
+        
         const [employeeData, attendanceData, leaveData, payrollData, overtimeData] = await Promise.all([
           apiService.getAllEmployees(),
           apiService.getAllAttendance(),
@@ -99,8 +108,10 @@ export default function Admin() {
     try {
       const updatedPayrollRecords = await apiService.getAllPayroll();
       setPayrollRecords(updatedPayrollRecords);
+      toast.success("Payroll data refreshed");
     } catch (error) {
       console.error("Failed to refresh payroll data", error);
+      toast.error("Failed to refresh payroll data");
     }
   };
   
@@ -110,8 +121,10 @@ export default function Admin() {
     try {
       const updatedOvertimeRecords = await apiService.getAllOvertime();
       setOvertimeRecords(updatedOvertimeRecords);
+      toast.success("Overtime data refreshed");
     } catch (error) {
       console.error("Failed to refresh overtime data", error);
+      toast.error("Failed to refresh overtime data");
     }
   };
 
