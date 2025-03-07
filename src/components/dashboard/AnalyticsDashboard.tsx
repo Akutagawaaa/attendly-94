@@ -138,7 +138,7 @@ export default function AnalyticsDashboard() {
   
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-2">
             <div className="space-y-1">
@@ -198,8 +198,8 @@ export default function AnalyticsDashboard() {
         </Card>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="col-span-1">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="col-span-1 h-full">
           <CardHeader>
             <CardTitle>Check-in Times</CardTitle>
             <CardDescription>Your check-in time pattern for the last 7 days</CardDescription>
@@ -249,7 +249,7 @@ export default function AnalyticsDashboard() {
           </CardContent>
         </Card>
         
-        <Card className="col-span-1">
+        <Card className="col-span-1 h-full">
           <CardHeader>
             <CardTitle>Attendance Pattern</CardTitle>
             <CardDescription>Distribution of arrival times</CardDescription>

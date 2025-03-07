@@ -33,9 +33,9 @@ export default function Login() {
       <div className="w-full max-w-md animate-fade-in-up relative z-10">
         <div className="flex flex-col items-center mb-8">
           <div className="relative h-16 w-16 overflow-hidden bg-gradient-to-br from-primary/90 to-primary rounded-2xl flex items-center justify-center shadow-lg mb-6">
-            <span className="text-white font-medium text-3xl">WP</span>
+            <span className="text-white font-medium text-3xl">AT</span>
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">WorkPulse</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Attendly</h1>
           <p className="text-muted-foreground mt-1">HR & Employee Management</p>
         </div>
         
