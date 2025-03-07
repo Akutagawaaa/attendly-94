@@ -1,4 +1,6 @@
+
 import { User } from "@/context/AuthContext";
+import { formatDate, isSameDay } from "@/lib/utils";
 
 // Mock attendance record interface
 export interface AttendanceRecord {
@@ -7,6 +9,9 @@ export interface AttendanceRecord {
   date: string;
   checkIn: Date;
   checkOut: Date | null;
+  modifiedBy?: number;
+  modifiedAt?: Date;
+  isAdminOverride?: boolean;
 }
 
 // Mock leave request interface
@@ -49,7 +54,7 @@ export interface OvertimeRecord {
 }
 
 // Re-export the User type from AuthContext
-export type { User } from "@/context/AuthContext";
+export type { User };
 
 // Mock API service
 class ApiService {
@@ -96,15 +101,12 @@ class ApiService {
     
     const mockData = this.getMockAttendanceData();
     const today = new Date();
-    const formattedDate = today.toLocaleDateString([], {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    const formattedDate = formatDate(today);
     
     // Check if already checked in today or has completed a check-in/out cycle
     const todayRecords = mockData.filter(
-      (record) => record.employeeId === userId && record.date === formattedDate
+      (record) => record.employeeId === userId && 
+                 isSameDay(new Date(record.date), today)
     );
     
     const hasCompletedCycle = todayRecords.some(record => record.checkOut !== null);
@@ -140,17 +142,13 @@ class ApiService {
     
     const mockData = this.getMockAttendanceData();
     const today = new Date();
-    const formattedDate = today.toLocaleDateString([], {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    const formattedDate = formatDate(today);
     
     // Find today's check-in record that hasn't been checked out
     const existingRecord = mockData.find(
       (record) => 
         record.employeeId === userId && 
-        record.date === formattedDate && 
+        isSameDay(new Date(record.date), today) && 
         !record.checkOut
     );
     
@@ -163,6 +161,82 @@ class ApiService {
     localStorage.setItem("mockAttendanceData", JSON.stringify(mockData));
     
     return existingRecord;
+  }
+
+  // Admin override check-in time
+  async adminOverrideCheckIn(employeeId: number, checkInTime: Date, adminId: number): Promise<AttendanceRecord> {
+    // Simulate API call delay
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
+    const mockData = this.getMockAttendanceData();
+    const formattedDate = formatDate(checkInTime);
+    
+    // Check if there's already a record for this date
+    const existingRecords = mockData.filter(
+      (record) => 
+        record.employeeId === employeeId && 
+        isSameDay(new Date(record.date), checkInTime)
+    );
+    
+    if (existingRecords.length > 0) {
+      // Update existing record
+      const record = existingRecords[0];
+      record.checkIn = checkInTime;
+      record.modifiedBy = adminId;
+      record.modifiedAt = new Date();
+      record.isAdminOverride = true;
+      
+      localStorage.setItem("mockAttendanceData", JSON.stringify(mockData));
+      return record;
+    }
+    
+    // Create new record
+    const newRecord: AttendanceRecord = {
+      id: mockData.length + 1,
+      employeeId,
+      date: formattedDate,
+      checkIn: checkInTime,
+      checkOut: null,
+      modifiedBy: adminId,
+      modifiedAt: new Date(),
+      isAdminOverride: true
+    };
+    
+    mockData.push(newRecord);
+    localStorage.setItem("mockAttendanceData", JSON.stringify(mockData));
+    
+    return newRecord;
+  }
+
+  // Admin override check-out time
+  async adminOverrideCheckOut(employeeId: number, checkOutTime: Date, adminId: number): Promise<AttendanceRecord> {
+    // Simulate API call delay
+    await new Promise((resolve) => setTimeout(resolve, 800));
+    
+    const mockData = this.getMockAttendanceData();
+    
+    // Find most recent check-in for this employee that doesn't have a check-out
+    const existingRecords = mockData.filter(
+      (record) => 
+        record.employeeId === employeeId && 
+        isSameDay(new Date(record.date), checkOutTime)
+    );
+    
+    if (existingRecords.length === 0) {
+      throw new Error("No check-in record found for this employee on the selected date");
+    }
+    
+    const record = existingRecords[0];
+    
+    // Update record with check-out time
+    record.checkOut = checkOutTime;
+    record.modifiedBy = adminId;
+    record.modifiedAt = new Date();
+    record.isAdminOverride = true;
+    
+    localStorage.setItem("mockAttendanceData", JSON.stringify(mockData));
+    
+    return record;
   }
 
   // Create a leave request
@@ -428,6 +502,7 @@ class ApiService {
         ...record,
         checkIn: new Date(record.checkIn),
         checkOut: record.checkOut ? new Date(record.checkOut) : null,
+        modifiedAt: record.modifiedAt ? new Date(record.modifiedAt) : undefined,
       }));
     }
     
@@ -440,33 +515,21 @@ class ApiService {
       {
         id: 1,
         employeeId: 1,
-        date: today.toLocaleDateString([], {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }),
+        date: formatDate(today),
         checkIn: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0),
         checkOut: null,
       },
       {
         id: 2,
         employeeId: 2,
-        date: today.toLocaleDateString([], {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }),
+        date: formatDate(today),
         checkIn: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 8, 45),
         checkOut: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 17, 30),
       },
       {
         id: 3,
         employeeId: 1,
-        date: yesterday.toLocaleDateString([], {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }),
+        date: formatDate(yesterday),
         checkIn: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 9, 15),
         checkOut: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 18, 0),
       },

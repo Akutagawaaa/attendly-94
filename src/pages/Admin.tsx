@@ -11,8 +11,11 @@ import ReportsPanel from "@/components/admin/ReportsPanel";
 import LeaveManagement from "@/components/admin/LeaveManagement";
 import PayrollManagement from "@/components/admin/PayrollManagement";
 import OvertimeManagement from "@/components/admin/OvertimeManagement";
+import AdminOverrideModal from "@/components/admin/AdminOverrideModal";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { UserCog } from "lucide-react";
 
 export default function Admin() {
   const { user, isAdmin } = useAuth();
@@ -23,6 +26,8 @@ export default function Admin() {
   const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
   const [overtimeRecords, setOvertimeRecords] = useState<OvertimeRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showOverrideModal, setShowOverrideModal] = useState(false);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<number | null>(null);
   
   // Redirect if not logged in or not an admin
   useEffect(() => {
@@ -106,6 +111,25 @@ export default function Admin() {
       console.error("Failed to refresh overtime data", error);
     }
   };
+
+  // Handle clicking "Override Check-in/out" for an employee
+  const handleOpenOverrideModal = (employeeId: number) => {
+    setSelectedEmployeeId(employeeId);
+    setShowOverrideModal(true);
+  };
+  
+  // Refresh attendance records after an override
+  const refreshAttendanceData = async () => {
+    if (!user || !isAdmin) return;
+    
+    try {
+      const updatedAttendanceRecords = await apiService.getAllAttendance();
+      setAttendanceRecords(updatedAttendanceRecords);
+      toast.success("Attendance records updated successfully");
+    } catch (error) {
+      console.error("Failed to refresh attendance data", error);
+    }
+  };
   
   if (!user || !isAdmin) {
     return null;
@@ -133,7 +157,7 @@ export default function Admin() {
             <TabsTrigger value="overtime">Overtime</TabsTrigger>
             <TabsTrigger value="leave">Leave Requests</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
-            <TabsTrigger value="settings" disabled>Settings</TabsTrigger>
+            <TabsTrigger value="attendance-override">Attendance Override</TabsTrigger>
           </TabsList>
           
           <TabsContent value="employees" className="space-y-4">
@@ -174,13 +198,48 @@ export default function Admin() {
             <ReportsPanel />
           </TabsContent>
           
-          <TabsContent value="settings">
-            <div className="p-8 text-center text-muted-foreground border rounded-lg">
-              Settings feature coming soon
+          <TabsContent value="attendance-override">
+            <div className="p-6 border rounded-lg bg-card">
+              <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h3 className="text-lg font-medium">Attendance Override</h3>
+                  <p className="text-muted-foreground">Override check-in and check-out times for employees</p>
+                </div>
+                <Button 
+                  onClick={() => setShowOverrideModal(true)}
+                  className="flex items-center gap-2"
+                >
+                  <UserCog className="h-4 w-4" />
+                  New Override
+                </Button>
+              </div>
+              
+              <div className="space-y-4">
+                <p>Select an employee to manually adjust their check-in or check-out time.</p>
+                
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {employees.map(employee => (
+                    <div key={employee.id} className="p-4 border rounded-md hover:bg-accent/50 transition-colors cursor-pointer" onClick={() => handleOpenOverrideModal(employee.id)}>
+                      <h4 className="font-medium">{employee.name}</h4>
+                      <p className="text-sm text-muted-foreground">{employee.department}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </TabsContent>
         </Tabs>
       </div>
+      
+      {showOverrideModal && (
+        <AdminOverrideModal
+          open={showOverrideModal}
+          onOpenChange={setShowOverrideModal}
+          employeeId={selectedEmployeeId}
+          employees={employees}
+          onOverrideComplete={refreshAttendanceData}
+        />
+      )}
     </Layout>
   );
 }

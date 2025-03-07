@@ -35,6 +35,21 @@ export default function CheckInOut({ onCheckInOut, checkedIn, lastCheckIn }: Che
           onClick: () => handleCheckOut(),
         },
       });
+    } else {
+      // Set up a reminder to trigger when 8 hours is reached
+      const timeUntil8Hours = eightHoursInMs - (currentTime - checkInTime);
+      
+      const reminderId = setTimeout(() => {
+        toast("You've been checked in for 8 hours", {
+          description: "Please remember to check out at the end of your workday.",
+          action: {
+            label: "Check out",
+            onClick: () => handleCheckOut(),
+          },
+        });
+      }, timeUntil8Hours);
+      
+      return () => clearTimeout(reminderId);
     }
     
     // Set up reminder for end of day (5:00 PM)
