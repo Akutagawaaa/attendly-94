@@ -1,3 +1,4 @@
+
 import { formatDate } from "@/lib/utils";
 
 export interface User {
@@ -488,5 +489,6 @@ export const apiService = {
     const expiryDate = new Date(registrationCode.expiryDate);
     if (expiryDate < new Date()) return false;
     
-    registration
-
+    return true;
+  }
+};
