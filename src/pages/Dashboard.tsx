@@ -12,6 +12,12 @@ import LeaveRequestForm from "@/components/dashboard/LeaveRequestForm";
 import LeaveHistory from "@/components/dashboard/LeaveHistory";
 import PayrollSummary from "@/components/dashboard/PayrollSummary";
 import OvertimeTracker from "@/components/dashboard/OvertimeTracker";
+import TeamStatusDashboard from "@/components/dashboard/TeamStatusDashboard";
+import CalendarIntegration from "@/components/dashboard/CalendarIntegration";
+import FlexibleWorkHours from "@/components/dashboard/FlexibleWorkHours";
+import AnalyticsDashboard from "@/components/dashboard/AnalyticsDashboard";
+import NotificationSystem from "@/components/dashboard/NotificationSystem";
+import TaskTracking from "@/components/dashboard/TaskTracking";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
@@ -109,6 +115,10 @@ export default function Dashboard() {
         <Tabs defaultValue="attendance" className="space-y-6">
           <TabsList className="mb-2">
             <TabsTrigger value="attendance">Attendance</TabsTrigger>
+            <TabsTrigger value="team">Team</TabsTrigger>
+            <TabsTrigger value="tasks">Tasks</TabsTrigger>
+            <TabsTrigger value="schedule">Schedule</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
             <TabsTrigger value="payroll">Payroll & Overtime</TabsTrigger>
             <TabsTrigger value="leave">Leave & Absence</TabsTrigger>
             <TabsTrigger value="profile">Profile</TabsTrigger>
@@ -134,6 +144,36 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
+          </TabsContent>
+          
+          <TabsContent value="team">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="lg:col-span-1">
+                <TeamStatusDashboard />
+              </div>
+              <div className="lg:col-span-1">
+                <NotificationSystem />
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="tasks">
+            <TaskTracking />
+          </TabsContent>
+          
+          <TabsContent value="schedule">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="lg:col-span-1">
+                <CalendarIntegration />
+              </div>
+              <div className="lg:col-span-1">
+                <FlexibleWorkHours />
+              </div>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="analytics">
+            <AnalyticsDashboard />
           </TabsContent>
           
           <TabsContent value="payroll">
