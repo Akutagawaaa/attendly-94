@@ -14,7 +14,7 @@ export default function AnalyticsDashboard() {
   const [loading, setLoading] = useState(true);
   const [metrics, setMetrics] = useState({
     averageHoursPerDay: 0,
-    punchInTrend: [] as { day: string, time: string }[],
+    punchInTrend: [] as { day: string, time: string, formattedTime?: string }[],
     daysWorked: 0,
     totalOvertime: 0,
   });
@@ -68,9 +68,11 @@ export default function AnalyticsDashboard() {
         const date = new Date(record.date);
         const day = date.toLocaleDateString('en-US', { weekday: 'short' });
         const checkInTime = new Date(record.checkIn as string);
+        const timeValue = checkInTime.getHours() + (checkInTime.getMinutes() / 60);
+        
         return {
           day,
-          time: checkInTime.getHours() + (checkInTime.getMinutes() / 60),
+          time: timeValue.toString(), // Convert to string to match the state type
           formattedTime: formatTime(checkInTime)
         };
       });
@@ -222,9 +224,14 @@ export default function AnalyticsDashboard() {
                     />
                     <Tooltip 
                       formatter={(value: any) => {
-                        const hours = Math.floor(value);
-                        const minutes = Math.round((value - hours) * 60);
-                        return [`${hours}:${minutes.toString().padStart(2, '0')}`, 'Check-in Time'];
+                        // We'll use formattedTime if available, or format the value
+                        if (typeof value === 'string') {
+                          const numValue = parseFloat(value);
+                          const hours = Math.floor(numValue);
+                          const minutes = Math.round((numValue - hours) * 60);
+                          return [`${hours}:${minutes.toString().padStart(2, '0')}`, 'Check-in Time'];
+                        }
+                        return [value, 'Check-in Time'];
                       }}
                     />
                     <Legend />
