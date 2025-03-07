@@ -174,8 +174,8 @@ export default function NotificationSystem() {
     
     setNotifications([newNotification, ...notifications]);
     
-    toast({
-      title: newNotification.title,
+    // Fix the toast call to use the proper format
+    toast(newNotification.title, {
       description: newNotification.message,
     });
   };
