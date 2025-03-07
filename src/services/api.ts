@@ -1,32 +1,31 @@
+import { formatDate } from "@/lib/utils";
 
-import { User } from "@/context/AuthContext";
-import { formatDate, isSameDay } from "@/lib/utils";
+export interface User {
+  id: number;
+  name: string;
+  email?: string;
+  password?: string;
+  role: "admin" | "employee";
+  department: string;
+}
 
-// Mock attendance record interface
 export interface AttendanceRecord {
   id: number;
   employeeId: number;
   date: string;
-  checkIn: Date;
-  checkOut: Date | null;
-  modifiedBy?: number;
-  modifiedAt?: Date;
-  isAdminOverride?: boolean;
+  checkIn: string | null;
+  checkOut: string | null;
 }
 
-// Mock leave request interface
 export interface LeaveRequest {
   id: number;
   employeeId: number;
-  startDate: Date;
-  endDate: Date;
-  type: string;
+  startDate: string;
+  endDate: string;
   reason: string;
   status: "pending" | "approved" | "rejected";
-  createdAt: Date;
 }
 
-// Payroll related interfaces
 export interface PayrollRecord {
   id: number;
   employeeId: number;
@@ -38,8 +37,8 @@ export interface PayrollRecord {
   deductions: number;
   netSalary: number;
   status: "draft" | "processed" | "paid";
-  processedDate: Date | null;
-  paymentDate: Date | null;
+  processedDate?: string | null;
+  paymentDate?: string | null;
 }
 
 export interface OvertimeRecord {
@@ -47,391 +46,181 @@ export interface OvertimeRecord {
   employeeId: number;
   date: string;
   hours: number;
-  approvedBy: number | null;
-  status: "pending" | "approved" | "rejected";
+  rate: number;
   reason: string;
-  rate: number; // multiplier for overtime pay (e.g., 1.5x, 2x)
+  status: "pending" | "approved" | "rejected";
+  approvedBy?: number | null;
 }
 
-// Re-export the User type from AuthContext
-export type { User };
+// Add types for employee registration
+export interface EmployeeRegistration {
+  name: string;
+  email: string;
+  password: string;
+  department: string;
+  role: "admin" | "employee";
+}
 
-// Mock API service
-class ApiService {
-  // Get the current user's attendance records
-  async getUserAttendance(userId: number): Promise<AttendanceRecord[]> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    // Get mock data from localStorage or create new mock data
-    const mockData = this.getMockAttendanceData();
-    
-    // Filter records for the specified user
-    return mockData.filter((record) => record.employeeId === userId);
-  }
+export interface RegistrationCode {
+  code: string;
+  expiryDate: Date;
+  isUsed: boolean;
+}
 
-  // Get all employee records (admin only)
+export const apiService = {
+  async login(email: string, password: string): Promise<User | null> {
+    const storedUsers = localStorage.getItem("mockUsers");
+    if (!storedUsers) return null;
+    
+    const users: User[] = JSON.parse(storedUsers);
+    const user = users.find(user => user.email === email && user.password === password);
+    
+    return user || null;
+  },
+  
+  async logout(): Promise<void> {
+    // In a real app, you might clear tokens or session data here
+    return Promise.resolve();
+  },
+  
+  async getUser(id: number): Promise<User | null> {
+    const storedUsers = localStorage.getItem("mockUsers");
+    if (!storedUsers) return null;
+    
+    const users: User[] = JSON.parse(storedUsers);
+    const user = users.find(user => user.id === id);
+    
+    return user || null;
+  },
+  
+  async getEmployeeById(id: number): Promise<User | null> {
+    const storedUsers = localStorage.getItem("mockUsers");
+    if (!storedUsers) return null;
+    
+    const users: User[] = JSON.parse(storedUsers);
+    const employee = users.find(user => user.id === id);
+    
+    return employee || null;
+  },
+  
   async getAllEmployees(): Promise<User[]> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    // Return mock employee data
-    return [
-      { id: 1, name: "Alex Johnson", email: "alex@example.com", role: "employee", department: "Engineering" },
-      { id: 2, name: "Sarah Chen", email: "sarah@example.com", role: "employee", department: "Design" },
-      { id: 3, name: "Michael Rodriguez", email: "michael@example.com", role: "employee", department: "Marketing" },
-      { id: 4, name: "Emma Williams", email: "emma@example.com", role: "admin", department: "HR" },
-      { id: 5, name: "David Kim", email: "david@example.com", role: "employee", department: "Engineering" },
-    ];
-  }
-
-  // Get all attendance records (admin only)
+    const storedUsers = localStorage.getItem("mockUsers");
+    return storedUsers ? JSON.parse(storedUsers) : [];
+  },
+  
   async getAllAttendance(): Promise<AttendanceRecord[]> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    const storedAttendance = localStorage.getItem("mockAttendanceData");
+    return storedAttendance ? JSON.parse(storedAttendance) : [];
+  },
+  
+  async createAttendanceRecord(record: Omit<AttendanceRecord, 'id'>): Promise<AttendanceRecord> {
+    const storedAttendance = localStorage.getItem("mockAttendanceData");
+    const attendanceRecords: AttendanceRecord[] = storedAttendance ? JSON.parse(storedAttendance) : [];
     
-    // Return mock attendance data
-    return this.getMockAttendanceData();
-  }
-
-  // Check-in a user
-  async checkIn(userId: number): Promise<AttendanceRecord> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    
-    const mockData = this.getMockAttendanceData();
-    const today = new Date();
-    const formattedDate = formatDate(today);
-    
-    // Check if already checked in today or has completed a check-in/out cycle
-    const todayRecords = mockData.filter(
-      (record) => record.employeeId === userId && 
-                 isSameDay(new Date(record.date), today)
-    );
-    
-    const hasCompletedCycle = todayRecords.some(record => record.checkOut !== null);
-    const hasActiveCheckIn = todayRecords.some(record => record.checkOut === null);
-    
-    if (hasCompletedCycle) {
-      throw new Error("You have already completed your check-in/out cycle for today");
-    }
-    
-    if (hasActiveCheckIn) {
-      throw new Error("You have already checked in today");
-    }
-    
-    // Create new check-in record
     const newRecord: AttendanceRecord = {
-      id: mockData.length + 1,
-      employeeId: userId,
-      date: formattedDate,
-      checkIn: new Date(),
-      checkOut: null,
+      id: Math.floor(Math.random() * 10000),
+      ...record,
     };
     
-    mockData.push(newRecord);
-    localStorage.setItem("mockAttendanceData", JSON.stringify(mockData));
-    
+    attendanceRecords.push(newRecord);
+    localStorage.setItem("mockAttendanceData", JSON.stringify(attendanceRecords));
     return newRecord;
-  }
-
-  // Check-out a user
-  async checkOut(userId: number): Promise<AttendanceRecord> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 600));
+  },
+  
+  async updateAttendanceRecord(id: number, updates: Partial<AttendanceRecord>): Promise<AttendanceRecord | null> {
+    const storedAttendance = localStorage.getItem("mockAttendanceData");
+    if (!storedAttendance) return null;
     
-    const mockData = this.getMockAttendanceData();
-    const today = new Date();
-    const formattedDate = formatDate(today);
+    let attendanceRecords: AttendanceRecord[] = JSON.parse(storedAttendance);
+    const recordIndex = attendanceRecords.findIndex(record => record.id === id);
     
-    // Find today's check-in record that hasn't been checked out
-    const existingRecord = mockData.find(
-      (record) => 
-        record.employeeId === userId && 
-        isSameDay(new Date(record.date), today) && 
-        !record.checkOut
-    );
+    if (recordIndex === -1) return null;
     
-    if (!existingRecord) {
-      throw new Error("You haven't checked in yet today");
-    }
-    
-    // Update the record with check-out time
-    existingRecord.checkOut = new Date();
-    localStorage.setItem("mockAttendanceData", JSON.stringify(mockData));
-    
-    return existingRecord;
-  }
-
-  // Admin override check-in time
-  async adminOverrideCheckIn(employeeId: number, checkInTime: Date, adminId: number): Promise<AttendanceRecord> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    const mockData = this.getMockAttendanceData();
-    const formattedDate = formatDate(checkInTime);
-    
-    // Check if there's already a record for this date
-    const existingRecords = mockData.filter(
-      (record) => 
-        record.employeeId === employeeId && 
-        isSameDay(new Date(record.date), checkInTime)
-    );
-    
-    if (existingRecords.length > 0) {
-      // Update existing record
-      const record = existingRecords[0];
-      record.checkIn = checkInTime;
-      record.modifiedBy = adminId;
-      record.modifiedAt = new Date();
-      record.isAdminOverride = true;
-      
-      localStorage.setItem("mockAttendanceData", JSON.stringify(mockData));
-      return record;
-    }
-    
-    // Create new record
-    const newRecord: AttendanceRecord = {
-      id: mockData.length + 1,
-      employeeId,
-      date: formattedDate,
-      checkIn: checkInTime,
-      checkOut: null,
-      modifiedBy: adminId,
-      modifiedAt: new Date(),
-      isAdminOverride: true
+    attendanceRecords[recordIndex] = {
+      ...attendanceRecords[recordIndex],
+      ...updates,
     };
     
-    mockData.push(newRecord);
-    localStorage.setItem("mockAttendanceData", JSON.stringify(mockData));
+    localStorage.setItem("mockAttendanceData", JSON.stringify(attendanceRecords));
+    return attendanceRecords[recordIndex];
+  },
+  
+  async deleteAttendanceRecord(id: number): Promise<boolean> {
+    const storedAttendance = localStorage.getItem("mockAttendanceData");
+    if (!storedAttendance) return false;
     
-    return newRecord;
-  }
-
-  // Admin override check-out time
-  async adminOverrideCheckOut(employeeId: number, checkOutTime: Date, adminId: number): Promise<AttendanceRecord> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    let attendanceRecords: AttendanceRecord[] = JSON.parse(storedAttendance);
+    const initialLength = attendanceRecords.length;
+    attendanceRecords = attendanceRecords.filter(record => record.id !== id);
     
-    const mockData = this.getMockAttendanceData();
+    if (attendanceRecords.length === initialLength) return false;
     
-    // Find most recent check-in for this employee that doesn't have a check-out
-    const existingRecords = mockData.filter(
-      (record) => 
-        record.employeeId === employeeId && 
-        isSameDay(new Date(record.date), checkOutTime)
-    );
-    
-    if (existingRecords.length === 0) {
-      throw new Error("No check-in record found for this employee on the selected date");
-    }
-    
-    const record = existingRecords[0];
-    
-    // Update record with check-out time
-    record.checkOut = checkOutTime;
-    record.modifiedBy = adminId;
-    record.modifiedAt = new Date();
-    record.isAdminOverride = true;
-    
-    localStorage.setItem("mockAttendanceData", JSON.stringify(mockData));
-    
-    return record;
-  }
-
-  // Create a leave request
-  async createLeaveRequest(leaveRequest: Omit<LeaveRequest, 'id' | 'status' | 'createdAt'>): Promise<LeaveRequest> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    const leaveRequests = this.getMockLeaveRequests();
+    localStorage.setItem("mockAttendanceData", JSON.stringify(attendanceRecords));
+    return true;
+  },
+  
+  async getAllLeaveRequests(): Promise<LeaveRequest[]> {
+    const storedRequests = localStorage.getItem("mockLeaveRequests");
+    return storedRequests ? JSON.parse(storedRequests) : [];
+  },
+  
+  async createLeaveRequest(request: Omit<LeaveRequest, 'id' | 'status'>, employeeId: number): Promise<LeaveRequest> {
+    const storedRequests = localStorage.getItem("mockLeaveRequests");
+    const leaveRequests: LeaveRequest[] = storedRequests ? JSON.parse(storedRequests) : [];
     
     const newRequest: LeaveRequest = {
-      id: leaveRequests.length + 1,
-      ...leaveRequest,
+      id: Math.floor(Math.random() * 10000),
+      employeeId,
+      startDate: request.startDate,
+      endDate: request.endDate,
+      reason: request.reason,
       status: "pending",
-      createdAt: new Date(),
     };
     
     leaveRequests.push(newRequest);
     localStorage.setItem("mockLeaveRequests", JSON.stringify(leaveRequests));
-    
     return newRequest;
-  }
-
-  // Get user leave requests
-  async getUserLeaveRequests(userId: number): Promise<LeaveRequest[]> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 600));
+  },
+  
+  async updateLeaveRequestStatus(id: number, status: "approved" | "rejected"): Promise<LeaveRequest | null> {
+    const storedRequests = localStorage.getItem("mockLeaveRequests");
+    if (!storedRequests) return null;
     
-    const leaveRequests = this.getMockLeaveRequests();
+    let leaveRequests: LeaveRequest[] = JSON.parse(storedRequests);
+    const requestIndex = leaveRequests.findIndex(request => request.id === id);
     
-    // Filter by user ID
-    return leaveRequests
-      .filter(request => request.employeeId === userId)
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
-  // Get all leave requests (admin only)
-  async getAllLeaveRequests(): Promise<LeaveRequest[]> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 600));
+    if (requestIndex === -1) return null;
     
-    return this.getMockLeaveRequests()
-      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
-  // Update leave request status (admin only)
-  async updateLeaveRequestStatus(id: number, status: "approved" | "rejected"): Promise<LeaveRequest> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    const leaveRequests = this.getMockLeaveRequests();
-    
-    const request = leaveRequests.find(req => req.id === id);
-    if (!request) {
-      throw new Error("Leave request not found");
-    }
-    
-    // Update status
-    request.status = status;
-    localStorage.setItem("mockLeaveRequests", JSON.stringify(leaveRequests));
-    
-    return request;
-  }
-
-  // Get payroll records for a specific employee
-  async getUserPayroll(userId: number): Promise<PayrollRecord[]> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    return this.getMockPayrollData().filter(
-      record => record.employeeId === userId
-    ).sort((a, b) => {
-      // Sort by year and month (most recent first)
-      if (a.year !== b.year) return b.year - a.year;
-      return new Date(`${b.month} 1, ${b.year}`).getTime() - new Date(`${a.month} 1, ${a.year}`).getTime();
-    });
-  }
-
-  // Get all payroll records (admin only)
-  async getAllPayroll(): Promise<PayrollRecord[]> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    return this.getMockPayrollData().sort((a, b) => {
-      // Sort by year and month (most recent first)
-      if (a.year !== b.year) return b.year - a.year;
-      return new Date(`${b.month} 1, ${b.year}`).getTime() - new Date(`${a.month} 1, ${a.year}`).getTime();
-    });
-  }
-
-  // Get overtime records for a specific employee
-  async getUserOvertime(userId: number): Promise<OvertimeRecord[]> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    
-    return this.getMockOvertimeData().filter(
-      record => record.employeeId === userId
-    ).sort((a, b) => {
-      // Sort by date (most recent first)
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
-    });
-  }
-
-  // Get all overtime records (admin only)
-  async getAllOvertime(): Promise<OvertimeRecord[]> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    
-    return this.getMockOvertimeData().sort((a, b) => {
-      // Sort by date (most recent first)
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
-    });
-  }
-
-  // Submit a new overtime request
-  async submitOvertimeRequest(overtimeRequest: Omit<OvertimeRecord, 'id' | 'status' | 'approvedBy'>): Promise<OvertimeRecord> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    const overtimeRecords = this.getMockOvertimeData();
-    
-    const newRequest: OvertimeRecord = {
-      id: overtimeRecords.length + 1,
-      ...overtimeRequest,
-      status: "pending",
-      approvedBy: null
+    leaveRequests[requestIndex] = {
+      ...leaveRequests[requestIndex],
+      status,
     };
     
-    overtimeRecords.push(newRequest);
-    localStorage.setItem("mockOvertimeData", JSON.stringify(overtimeRecords));
-    
-    return newRequest;
-  }
-
-  // Update overtime request status (admin only)
-  async updateOvertimeStatus(id: number, status: "approved" | "rejected", approvedBy: number): Promise<OvertimeRecord> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    const overtimeRecords = this.getMockOvertimeData();
-    
-    const request = overtimeRecords.find(req => req.id === id);
-    if (!request) {
-      throw new Error("Overtime request not found");
-    }
-    
-    // Update status and approver
-    request.status = status;
-    request.approvedBy = approvedBy;
-    localStorage.setItem("mockOvertimeData", JSON.stringify(overtimeRecords));
-    
-    return request;
-  }
-
-  // Calculate and process payroll for an employee (admin only)
+    localStorage.setItem("mockLeaveRequests", JSON.stringify(leaveRequests));
+    return leaveRequests[requestIndex];
+  },
+  
+  async getAllPayroll(): Promise<PayrollRecord[]> {
+    const storedPayroll = localStorage.getItem("mockPayrollData");
+    return storedPayroll ? JSON.parse(storedPayroll) : [];
+  },
+  
   async processPayroll(employeeId: number, month: string, year: number): Promise<PayrollRecord> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    const payrollRecords = this.getMockPayrollData();
-    
-    // Check if a payroll record already exists for this month/year/employee
-    const existingRecord = payrollRecords.find(
-      record => record.employeeId === employeeId && record.month === month && record.year === year
-    );
-    
-    if (existingRecord) {
-      // Update existing record
-      existingRecord.status = "processed";
-      existingRecord.processedDate = new Date();
-      localStorage.setItem("mockPayrollData", JSON.stringify(payrollRecords));
-      return existingRecord;
+    // Fetch employee data
+    const employee = await this.getEmployeeById(employeeId);
+    if (!employee) {
+      throw new Error("Employee not found");
     }
     
-    // Get employee overtime records for the month
-    const overtimeRecords = this.getMockOvertimeData().filter(
-      record => {
-        const recordDate = new Date(record.date);
-        return record.employeeId === employeeId && 
-               record.status === "approved" &&
-               recordDate.getMonth() === new Date(`${month} 1`).getMonth() &&
-               recordDate.getFullYear() === year;
-      }
-    );
+    // Mock calculation
+    const baseSalary = 5000;
+    const overtimePay = 500;
+    const bonus = 100;
+    const deductions = 200;
+    const netSalary = baseSalary + overtimePay + bonus - deductions;
     
-    // Calculate overtime pay
-    const overtimeHours = overtimeRecords.reduce((total, record) => total + record.hours, 0);
-    const overtimePay = overtimeHours * 25 * this.getAverageOvertimeRate(overtimeRecords); // Assuming $25/hour base rate
-    
-    // Create new payroll record with mock data
-    const baseSalary = this.getEmployeeBaseSalary(employeeId);
-    const bonus = Math.random() < 0.3 ? Math.round(baseSalary * 0.05) : 0; // Random bonus for some employees
-    const deductions = Math.round(baseSalary * 0.2); // Tax and other deductions
-    
-    const newRecord: PayrollRecord = {
-      id: payrollRecords.length + 1,
+    const newPayroll: PayrollRecord = {
+      id: Math.floor(Math.random() * 10000),
       employeeId,
       month,
       year,
@@ -439,317 +228,216 @@ class ApiService {
       overtimePay,
       bonus,
       deductions,
-      netSalary: baseSalary + overtimePay + bonus - deductions,
+      netSalary,
       status: "processed",
-      processedDate: new Date(),
-      paymentDate: null
+      processedDate: new Date().toISOString(),
     };
     
-    payrollRecords.push(newRecord);
-    localStorage.setItem("mockPayrollData", JSON.stringify(payrollRecords));
+    // Save to localStorage
+    const storedPayroll = localStorage.getItem("mockPayrollData");
+    const payrollData: PayrollRecord[] = storedPayroll ? JSON.parse(storedPayroll) : [];
+    payrollData.push(newPayroll);
+    localStorage.setItem("mockPayrollData", JSON.stringify(payrollData));
     
-    return newRecord;
-  }
-
-  // Mark payroll as paid (admin only)
-  async markPayrollAsPaid(payrollId: number): Promise<PayrollRecord> {
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    
-    const payrollRecords = this.getMockPayrollData();
-    
-    const record = payrollRecords.find(rec => rec.id === payrollId);
-    if (!record) {
-      throw new Error("Payroll record not found");
-    }
-    
-    record.status = "paid";
-    record.paymentDate = new Date();
-    localStorage.setItem("mockPayrollData", JSON.stringify(payrollRecords));
-    
-    return record;
-  }
-
-  // Private helper methods
-  private getEmployeeBaseSalary(employeeId: number): number {
-    // Mock base salaries based on employee ID
-    const baseSalaries: Record<number, number> = {
-      1: 5000, // Alex Johnson
-      2: 5500, // Sarah Chen
-      3: 4800, // Michael Rodriguez
-      4: 6200, // Emma Williams
-      5: 5200  // David Kim
-    };
-    
-    return baseSalaries[employeeId] || 5000; // Default to 5000 if not found
-  }
+    return newPayroll;
+  },
   
-  private getAverageOvertimeRate(overtimeRecords: OvertimeRecord[]): number {
-    if (overtimeRecords.length === 0) return 1.5; // Default overtime rate
+  async markPayrollAsPaid(id: number): Promise<PayrollRecord | null> {
+    const storedPayroll = localStorage.getItem("mockPayrollData");
+    if (!storedPayroll) return null;
     
-    const totalRate = overtimeRecords.reduce((sum, record) => sum + record.rate, 0);
-    return totalRate / overtimeRecords.length;
-  }
+    let payrollRecords: PayrollRecord[] = JSON.parse(storedPayroll);
+    const recordIndex = payrollRecords.findIndex(record => record.id === id);
+    
+    if (recordIndex === -1) return null;
+    
+    payrollRecords[recordIndex] = {
+      ...payrollRecords[recordIndex],
+      status: "paid",
+      paymentDate: new Date().toISOString(),
+    };
+    
+    localStorage.setItem("mockPayrollData", JSON.stringify(payrollRecords));
+    return payrollRecords[recordIndex];
+  },
+  
+  async getAllOvertime(): Promise<OvertimeRecord[]> {
+    const storedOvertime = localStorage.getItem("mockOvertimeData");
+    return storedOvertime ? JSON.parse(storedOvertime) : [];
+  },
+  
+  async createOvertimeRequest(request: Omit<OvertimeRecord, 'id' | 'status' | 'approvedBy'>, employeeId: number): Promise<OvertimeRecord> {
+    const storedOvertime = localStorage.getItem("mockOvertimeData");
+    const overtimeRecords: OvertimeRecord[] = storedOvertime ? JSON.parse(storedOvertime) : [];
+    
+    const newOvertime: OvertimeRecord = {
+      id: Math.floor(Math.random() * 10000),
+      employeeId,
+      date: request.date,
+      hours: request.hours,
+      rate: request.rate,
+      reason: request.reason,
+      status: "pending",
+    };
+    
+    overtimeRecords.push(newOvertime);
+    localStorage.setItem("mockOvertimeData", JSON.stringify(overtimeRecords));
+    return newOvertime;
+  },
+  
+  async updateOvertimeStatus(id: number, status: "approved" | "rejected", approvedBy: number): Promise<OvertimeRecord | null> {
+    const storedOvertime = localStorage.getItem("mockOvertimeData");
+    if (!storedOvertime) return null;
+    
+    let overtimeRecords: OvertimeRecord[] = JSON.parse(storedOvertime);
+    const recordIndex = overtimeRecords.findIndex(record => record.id === id);
+    
+    if (recordIndex === -1) return null;
+    
+    overtimeRecords[recordIndex] = {
+      ...overtimeRecords[recordIndex],
+      status,
+      approvedBy,
+    };
+    
+    localStorage.setItem("mockOvertimeData", JSON.stringify(overtimeRecords));
+    return overtimeRecords[recordIndex];
+  },
 
-  // Private helper to get or initialize mock data
-  private getMockAttendanceData(): AttendanceRecord[] {
-    const storedData = localStorage.getItem("mockAttendanceData");
+  async adminOverrideCheckIn(employeeId: number, checkInTime: Date, adminId: number): Promise<AttendanceRecord | null> {
+    const today = formatDate(new Date());
     
-    if (storedData) {
-      // Parse stored data and convert date strings back to Date objects
-      const parsedData = JSON.parse(storedData);
-      return parsedData.map((record: any) => ({
-        ...record,
-        checkIn: new Date(record.checkIn),
-        checkOut: record.checkOut ? new Date(record.checkOut) : null,
-        modifiedAt: record.modifiedAt ? new Date(record.modifiedAt) : undefined,
-      }));
-    }
+    // Get existing attendance records for the day
+    const attendanceRecords = await this.getAllAttendance();
+    const existingRecord = attendanceRecords.find(
+      record => 
+        record.employeeId === employeeId && 
+        record.date === today
+    );
     
-    // Create initial mock data
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    
-    const mockData: AttendanceRecord[] = [
-      {
-        id: 1,
-        employeeId: 1,
-        date: formatDate(today),
-        checkIn: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 9, 0),
+    if (existingRecord) {
+      // Update existing record
+      existingRecord.checkIn = checkInTime.toISOString();
+      await this.updateAttendanceRecord(existingRecord.id, existingRecord);
+      return existingRecord;
+    } else {
+      // Create a new record
+      const newRecord: AttendanceRecord = {
+        id: Math.floor(Math.random() * 10000),
+        employeeId: employeeId,
+        date: today,
+        checkIn: checkInTime.toISOString(),
         checkOut: null,
-      },
-      {
-        id: 2,
-        employeeId: 2,
-        date: formatDate(today),
-        checkIn: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 8, 45),
-        checkOut: new Date(today.getFullYear(), today.getMonth(), today.getDate(), 17, 30),
-      },
-      {
-        id: 3,
-        employeeId: 1,
-        date: formatDate(yesterday),
-        checkIn: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 9, 15),
-        checkOut: new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate(), 18, 0),
-      },
-    ];
+      };
+      
+      attendanceRecords.push(newRecord);
+      localStorage.setItem("mockAttendanceData", JSON.stringify(attendanceRecords));
+      return newRecord;
+    }
+  },
+  
+  async adminOverrideCheckOut(employeeId: number, checkOutTime: Date, adminId: number): Promise<AttendanceRecord | null> {
+    const today = formatDate(new Date());
     
-    localStorage.setItem("mockAttendanceData", JSON.stringify(mockData));
-    return mockData;
-  }
-
-  // Private helper to get or initialize mock leave requests
-  private getMockLeaveRequests(): LeaveRequest[] {
-    const storedData = localStorage.getItem("mockLeaveRequests");
+    // Get existing attendance records for the day
+    const attendanceRecords = await this.getAllAttendance();
+    const existingRecord = attendanceRecords.find(
+      record => 
+        record.employeeId === employeeId && 
+        record.date === today
+    );
     
-    if (storedData) {
-      // Parse stored data and convert date strings back to Date objects
-      const parsedData = JSON.parse(storedData);
-      return parsedData.map((request: any) => ({
-        ...request,
-        startDate: new Date(request.startDate),
-        endDate: new Date(request.endDate),
-        createdAt: new Date(request.createdAt),
-      }));
+    if (existingRecord) {
+      // Update existing record
+      existingRecord.checkOut = checkOutTime.toISOString();
+      await this.updateAttendanceRecord(existingRecord.id, existingRecord);
+      return existingRecord;
+    } else {
+      // Create a new record
+      const newRecord: AttendanceRecord = {
+        id: Math.floor(Math.random() * 10000),
+        employeeId: employeeId,
+        date: today,
+        checkIn: null,
+        checkOut: checkOutTime.toISOString(),
+      };
+      
+      attendanceRecords.push(newRecord);
+      localStorage.setItem("mockAttendanceData", JSON.stringify(attendanceRecords));
+      return newRecord;
+    }
+  },
+  // Employee Registration
+  async registerEmployee(data: EmployeeRegistration): Promise<User> {
+    // In a real app, this would make an API call to register the employee
+    console.log("Registering employee:", data);
+    
+    // For our mock implementation, save to localStorage
+    const storedUsers = localStorage.getItem("mockUsers");
+    let users = storedUsers ? JSON.parse(storedUsers) : [];
+    
+    // Check if email already exists
+    const emailExists = users.some((user: any) => user.email === data.email);
+    if (emailExists) {
+      throw new Error("Email already registered");
     }
     
-    // Create initial mock data
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
+    // Create new user
+    const newUser: User = {
+      id: Math.floor(Math.random() * 10000) + 10, // Ensure it doesn't conflict with existing IDs
+      name: data.name,
+      email: data.email,
+      password: data.password, // In a real app, this would be hashed
+      role: data.role,
+      department: data.department,
+    };
     
-    const threeDaysAgo = new Date(today);
-    threeDaysAgo.setDate(today.getDate() - 3);
+    users.push(newUser);
+    localStorage.setItem("mockUsers", JSON.stringify(users));
     
-    const nextWeek = new Date(today);
-    nextWeek.setDate(today.getDate() + 7);
+    return newUser;
+  },
+  
+  // Registration Codes
+  async createRegistrationCode(code: string, expiryDays: number): Promise<RegistrationCode> {
+    // Set expiry date
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + expiryDays);
     
-    const mockData: LeaveRequest[] = [
-      {
-        id: 1,
-        employeeId: 1,
-        startDate: nextWeek,
-        endDate: new Date(nextWeek.getFullYear(), nextWeek.getMonth(), nextWeek.getDate() + 2),
-        type: "annual",
-        reason: "Family vacation",
-        status: "pending",
-        createdAt: yesterday,
-      },
-      {
-        id: 2,
-        employeeId: 1,
-        startDate: threeDaysAgo,
-        endDate: yesterday,
-        type: "sick",
-        reason: "Caught a cold",
-        status: "approved",
-        createdAt: new Date(threeDaysAgo.getFullYear(), threeDaysAgo.getMonth(), threeDaysAgo.getDate() - 1),
-      },
-      {
-        id: 3,
-        employeeId: 2,
-        startDate: today,
-        endDate: new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1),
-        type: "family",
-        reason: "Family emergency",
-        status: "approved",
-        createdAt: yesterday,
-      },
-    ];
+    const registrationCode: RegistrationCode = {
+      code,
+      expiryDate,
+      isUsed: false
+    };
     
-    localStorage.setItem("mockLeaveRequests", JSON.stringify(mockData));
-    return mockData;
-  }
-
-  // Private helper to get or initialize mock payroll data
-  private getMockPayrollData(): PayrollRecord[] {
-    const storedData = localStorage.getItem("mockPayrollData");
+    // Store in localStorage for our mock implementation
+    const storedCodes = localStorage.getItem("mockRegistrationCodes");
+    const codes = storedCodes ? JSON.parse(storedCodes) : [];
+    codes.push(registrationCode);
+    localStorage.setItem("mockRegistrationCodes", JSON.stringify(codes));
     
-    if (storedData) {
-      // Parse stored data and convert date strings back to Date objects
-      const parsedData = JSON.parse(storedData);
-      return parsedData.map((record: any) => ({
-        ...record,
-        processedDate: record.processedDate ? new Date(record.processedDate) : null,
-        paymentDate: record.paymentDate ? new Date(record.paymentDate) : null,
-      }));
-    }
+    return registrationCode;
+  },
+  
+  async validateRegistrationCode(code: string): Promise<boolean> {
+    // Get codes from localStorage
+    const storedCodes = localStorage.getItem("mockRegistrationCodes");
+    if (!storedCodes) return false;
     
-    // Create initial mock data
-    const today = new Date();
-    const currentMonth = today.toLocaleString('default', { month: 'long' });
-    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1).toLocaleString('default', { month: 'long' });
-    const twoMonthsAgo = new Date(today.getFullYear(), today.getMonth() - 2, 1).toLocaleString('default', { month: 'long' });
+    const codes: RegistrationCode[] = JSON.parse(storedCodes);
+    const registrationCode = codes.find(c => c.code === code);
     
-    const mockData: PayrollRecord[] = [
-      {
-        id: 1,
-        employeeId: 1,
-        month: lastMonth,
-        year: today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear(),
-        baseSalary: 5000,
-        overtimePay: 350,
-        bonus: 250,
-        deductions: 1000,
-        netSalary: 4600,
-        status: "paid",
-        processedDate: new Date(today.getFullYear(), today.getMonth() - 1, 25),
-        paymentDate: new Date(today.getFullYear(), today.getMonth() - 1, 28),
-      },
-      {
-        id: 2,
-        employeeId: 2,
-        month: lastMonth,
-        year: today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear(),
-        baseSalary: 5500,
-        overtimePay: 0,
-        bonus: 0,
-        deductions: 1100,
-        netSalary: 4400,
-        status: "paid",
-        processedDate: new Date(today.getFullYear(), today.getMonth() - 1, 25),
-        paymentDate: new Date(today.getFullYear(), today.getMonth() - 1, 28),
-      },
-      {
-        id: 3,
-        employeeId: 1,
-        month: twoMonthsAgo,
-        year: today.getMonth() <= 1 ? today.getFullYear() - 1 : today.getFullYear(),
-        baseSalary: 5000,
-        overtimePay: 200,
-        bonus: 0,
-        deductions: 1000,
-        netSalary: 4200,
-        status: "paid",
-        processedDate: new Date(today.getFullYear(), today.getMonth() - 2, 26),
-        paymentDate: new Date(today.getFullYear(), today.getMonth() - 2, 30),
-      },
-      {
-        id: 4,
-        employeeId: 1,
-        month: currentMonth,
-        year: today.getFullYear(),
-        baseSalary: 5000,
-        overtimePay: 0,
-        bonus: 0,
-        deductions: 1000,
-        netSalary: 4000,
-        status: "draft",
-        processedDate: null,
-        paymentDate: null,
-      },
-    ];
+    // Check if code exists, is not used, and has not expired
+    if (!registrationCode) return false;
+    if (registrationCode.isUsed) return false;
     
-    localStorage.setItem("mockPayrollData", JSON.stringify(mockData));
-    return mockData;
-  }
-
-  // Private helper to get or initialize mock overtime data
-  private getMockOvertimeData(): OvertimeRecord[] {
-    const storedData = localStorage.getItem("mockOvertimeData");
+    const expiryDate = new Date(registrationCode.expiryDate);
+    if (expiryDate < new Date()) return false;
     
-    if (storedData) {
-      return JSON.parse(storedData);
-    }
+    // Mark code as used
+    registrationCode.isUsed = true;
+    localStorage.setItem("mockRegistrationCodes", JSON.stringify(codes));
     
-    // Create initial mock data
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(today.getDate() - 1);
-    
-    const threeDaysAgo = new Date(today);
-    threeDaysAgo.setDate(today.getDate() - 3);
-    
-    const lastWeek = new Date(today);
-    lastWeek.setDate(today.getDate() - 7);
-    
-    const mockData: OvertimeRecord[] = [
-      {
-        id: 1,
-        employeeId: 1,
-        date: lastWeek.toISOString().split('T')[0],
-        hours: 2.5,
-        approvedBy: 4,
-        status: "approved",
-        reason: "Urgent client project deadline",
-        rate: 1.5
-      },
-      {
-        id: 2,
-        employeeId: 1,
-        date: yesterday.toISOString().split('T')[0],
-        hours: 1.0,
-        approvedBy: null,
-        status: "pending",
-        reason: "System maintenance after hours",
-        rate: 1.5
-      },
-      {
-        id: 3,
-        employeeId: 2,
-        date: threeDaysAgo.toISOString().split('T')[0],
-        hours: 3.0,
-        approvedBy: 4,
-        status: "approved",
-        reason: "Emergency design changes for product launch",
-        rate: 1.5
-      },
-      {
-        id: 4,
-        employeeId: 5,
-        date: today.toISOString().split('T')[0],
-        hours: 2.0,
-        approvedBy: null,
-        status: "pending",
-        reason: "Critical bug fix implementation",
-        rate: 2.0
-      },
-    ];
-    
-    localStorage.setItem("mockOvertimeData", JSON.stringify(mockData));
-    return mockData;
-  }
-}
-
-export const apiService = new ApiService();
+    return true;
+  },
+};

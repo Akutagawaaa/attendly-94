@@ -10,16 +10,18 @@ export function getUserTimezone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
-export function formatTime(date: Date): string {
-  return date.toLocaleTimeString([], {
+export function formatTime(date: Date | string): string {
+  const dateObj = date instanceof Date ? date : new Date(date);
+  return dateObj.toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
   });
 }
 
-export function formatTimeWithZone(date: Date): string {
-  return date.toLocaleTimeString([], {
+export function formatTimeWithZone(date: Date | string): string {
+  const dateObj = date instanceof Date ? date : new Date(date);
+  return dateObj.toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
@@ -27,23 +29,28 @@ export function formatTimeWithZone(date: Date): string {
   });
 }
 
-export function formatDate(date: Date): string {
-  return date.toLocaleDateString([], {
+export function formatDate(date: Date | string): string {
+  const dateObj = date instanceof Date ? date : new Date(date);
+  return dateObj.toLocaleDateString([], {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 }
 
-export function formatDateShort(date: Date): string {
-  return date.toLocaleDateString([], {
+export function formatDateShort(date: Date | string): string {
+  const dateObj = date instanceof Date ? date : new Date(date);
+  return dateObj.toLocaleDateString([], {
     month: "short",
     day: "numeric",
   });
 }
 
-export function getDuration(start: Date, end: Date): string {
-  const durationMs = end.getTime() - start.getTime();
+export function getDuration(start: Date | string, end: Date | string): string {
+  const startDate = start instanceof Date ? start : new Date(start);
+  const endDate = end instanceof Date ? end : new Date(end);
+  
+  const durationMs = endDate.getTime() - startDate.getTime();
   const hours = Math.floor(durationMs / (1000 * 60 * 60));
   const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
   
@@ -84,11 +91,14 @@ export function exportToCSV(data: any[], filename: string): void {
   }
 }
 
-export function isSameDay(date1: Date, date2: Date): boolean {
+export function isSameDay(date1: Date | string, date2: Date | string): boolean {
+  const d1 = date1 instanceof Date ? date1 : new Date(date1);
+  const d2 = date2 instanceof Date ? date2 : new Date(date2);
+  
   return (
-    date1.getFullYear() === date2.getFullYear() &&
-    date1.getMonth() === date2.getMonth() &&
-    date1.getDate() === date2.getDate()
+    d1.getFullYear() === d2.getFullYear() &&
+    d1.getMonth() === d2.getMonth() &&
+    d1.getDate() === d2.getDate()
   );
 }
 
@@ -147,4 +157,15 @@ export function createMockAttendance() {
       checkOut: new Date(yesterday.setHours(18, 0, 0, 0)),
     },
   ];
+}
+
+// Function to generate registration code for new employees
+export function generateRegistrationCode(): string {
+  // Generate a random 8-character alphanumeric code
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+  }
+  return result;
 }
