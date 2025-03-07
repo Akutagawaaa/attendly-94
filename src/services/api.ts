@@ -49,7 +49,7 @@ export interface OvertimeRecord {
 }
 
 // Re-export the User type from AuthContext
-export { User } from "@/context/AuthContext";
+export type { User } from "@/context/AuthContext";
 
 // Mock API service
 class ApiService {

@@ -1,4 +1,3 @@
-
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -6,11 +5,24 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+export function getUserTimezone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone;
+}
+
 export function formatTime(date: Date): string {
   return date.toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
     hour12: true,
+  });
+}
+
+export function formatTimeWithZone(date: Date): string {
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZoneName: "short",
   });
 }
 
@@ -39,6 +51,36 @@ export function getDuration(start: Date, end: Date): string {
   }
   
   return `${hours}h ${minutes}m`;
+}
+
+export function exportToCSV(data: any[], filename: string): void {
+  const csvRows: string[] = [];
+  
+  const headers = Object.keys(data[0]);
+  csvRows.push(headers.join(','));
+  
+  for (const row of data) {
+    const values = headers.map(header => {
+      const value = row[header];
+      const escaped = String(value).replace(/"/g, '""');
+      return `"${escaped}"`;
+    });
+    csvRows.push(values.join(','));
+  }
+  
+  const csvString = csvRows.join('\n');
+  const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  
+  if (link.download !== undefined) {
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 }
 
 export function createMockEmployees() {

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ButtonCustom } from "@/components/ui/button-custom";
 import { useAuth } from "@/context/AuthContext";
 import { apiService } from "@/services/api";
@@ -17,6 +17,47 @@ interface CheckInOutProps {
 export default function CheckInOut({ onCheckInOut, checkedIn, lastCheckIn }: CheckInOutProps) {
   const [loading, setLoading] = useState(false);
   const { user } = useAuth();
+  
+  // Set up auto-checkout reminder
+  useEffect(() => {
+    if (!checkedIn || !lastCheckIn) return;
+    
+    // Check if the user has been checked in for more than 8 hours
+    const checkInTime = new Date(lastCheckIn).getTime();
+    const currentTime = new Date().getTime();
+    const eightHoursInMs = 8 * 60 * 60 * 1000;
+    
+    if (currentTime - checkInTime > eightHoursInMs) {
+      toast("Don't forget to check out!", {
+        description: "You've been checked in for over 8 hours.",
+        action: {
+          label: "Check out",
+          onClick: () => handleCheckOut(),
+        },
+      });
+    }
+    
+    // Set up reminder for end of day (5:00 PM)
+    const endOfDay = new Date();
+    endOfDay.setHours(17, 0, 0, 0); // 5:00 PM
+    
+    // Only set reminder if it's before 5 PM
+    if (new Date() < endOfDay) {
+      const timeUntilEndOfDay = endOfDay.getTime() - new Date().getTime();
+      
+      const reminderId = setTimeout(() => {
+        toast("End of workday", {
+          description: "It's 5:00 PM. Don't forget to check out!",
+          action: {
+            label: "Check out",
+            onClick: () => handleCheckOut(),
+          },
+        });
+      }, timeUntilEndOfDay);
+      
+      return () => clearTimeout(reminderId);
+    }
+  }, [checkedIn, lastCheckIn]);
   
   if (!user) return null;
   
