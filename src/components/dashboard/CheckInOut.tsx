@@ -4,7 +4,7 @@ import { ButtonCustom } from "@/components/ui/button-custom";
 import { useAuth } from "@/context/AuthContext";
 import { apiService } from "@/services/api";
 import { toast } from "sonner";
-import { LogIn, LogOut, Timer } from "lucide-react";
+import { LogIn, LogOut, Timer, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatTime } from "@/lib/utils";
 
@@ -16,7 +16,17 @@ interface CheckInOutProps {
 
 export default function CheckInOut({ onCheckInOut, checkedIn, lastCheckIn }: CheckInOutProps) {
   const [loading, setLoading] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
   const { user } = useAuth();
+  
+  // Update the current time every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    
+    return () => clearInterval(interval);
+  }, []);
   
   // Set up auto-checkout reminder
   useEffect(() => {
@@ -105,7 +115,23 @@ export default function CheckInOut({ onCheckInOut, checkedIn, lastCheckIn }: Che
   };
   
   const getCurrentTimeString = () => {
-    return formatTime(new Date());
+    return formatTime(currentTime);
+  };
+  
+  // Calculate the duration since check-in
+  const getWorkDuration = () => {
+    if (!checkedIn || !lastCheckIn) return null;
+    
+    const checkInTime = new Date(lastCheckIn).getTime();
+    const now = currentTime.getTime();
+    const durationMs = now - checkInTime;
+    
+    // Calculate hours, minutes, seconds
+    const hours = Math.floor(durationMs / (1000 * 60 * 60));
+    const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((durationMs % (1000 * 60)) / 1000);
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
   
   return (
@@ -113,9 +139,11 @@ export default function CheckInOut({ onCheckInOut, checkedIn, lastCheckIn }: Che
       <CardContent className="p-6">
         <div className="flex flex-col items-center justify-center space-y-6">
           <div className="text-center">
-            <p className="text-2xl font-semibold mb-1">{getCurrentTimeString()}</p>
+            <p className="text-2xl font-semibold mb-1">
+              {getCurrentTimeString()}
+            </p>
             <p className="text-sm text-muted-foreground">
-              {new Date().toLocaleDateString([], { 
+              {currentTime.toLocaleDateString([], { 
                 weekday: 'long', 
                 year: 'numeric', 
                 month: 'long', 
@@ -126,7 +154,16 @@ export default function CheckInOut({ onCheckInOut, checkedIn, lastCheckIn }: Che
           
           <div className="w-32 h-32 rounded-full bg-muted/30 border-4 border-primary/20 flex items-center justify-center relative overflow-hidden group">
             <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors duration-300"></div>
-            <Timer className="h-12 w-12 text-primary/80" />
+            {checkedIn ? (
+              <div className="flex flex-col items-center">
+                <Clock className="h-12 w-12 text-primary/80 animate-pulse" />
+                {getWorkDuration() && (
+                  <p className="text-xs font-medium mt-1 text-primary">{getWorkDuration()}</p>
+                )}
+              </div>
+            ) : (
+              <Timer className="h-12 w-12 text-primary/80" />
+            )}
           </div>
           
           <div className="space-y-4 w-full">
