@@ -1,9 +1,10 @@
+
 import { formatDate } from "@/lib/utils";
 
 export interface User {
   id: number;
   name: string;
-  email?: string;
+  email: string;
   password?: string;
   role: "admin" | "employee";
   department: string;
@@ -24,6 +25,8 @@ export interface LeaveRequest {
   endDate: string;
   reason: string;
   status: "pending" | "approved" | "rejected";
+  type: string;
+  createdAt: string;
 }
 
 export interface PayrollRecord {
@@ -113,6 +116,12 @@ export const apiService = {
     return storedAttendance ? JSON.parse(storedAttendance) : [];
   },
   
+  async getUserAttendance(userId: number): Promise<AttendanceRecord[]> {
+    const storedAttendance = localStorage.getItem("mockAttendanceData");
+    const attendanceRecords: AttendanceRecord[] = storedAttendance ? JSON.parse(storedAttendance) : [];
+    return attendanceRecords.filter(record => record.employeeId === userId);
+  },
+  
   async createAttendanceRecord(record: Omit<AttendanceRecord, 'id'>): Promise<AttendanceRecord> {
     const storedAttendance = localStorage.getItem("mockAttendanceData");
     const attendanceRecords: AttendanceRecord[] = storedAttendance ? JSON.parse(storedAttendance) : [];
@@ -164,7 +173,13 @@ export const apiService = {
     return storedRequests ? JSON.parse(storedRequests) : [];
   },
   
-  async createLeaveRequest(request: Omit<LeaveRequest, 'id' | 'status'>, employeeId: number): Promise<LeaveRequest> {
+  async getUserLeaveRequests(userId: number): Promise<LeaveRequest[]> {
+    const storedRequests = localStorage.getItem("mockLeaveRequests");
+    const leaveRequests: LeaveRequest[] = storedRequests ? JSON.parse(storedRequests) : [];
+    return leaveRequests.filter(request => request.employeeId === userId);
+  },
+  
+  async createLeaveRequest(request: Omit<LeaveRequest, 'id' | 'status' | 'createdAt' | 'type'>, employeeId: number): Promise<LeaveRequest> {
     const storedRequests = localStorage.getItem("mockLeaveRequests");
     const leaveRequests: LeaveRequest[] = storedRequests ? JSON.parse(storedRequests) : [];
     
@@ -175,6 +190,8 @@ export const apiService = {
       endDate: request.endDate,
       reason: request.reason,
       status: "pending",
+      type: "annual", // Default type
+      createdAt: new Date().toISOString(),
     };
     
     leaveRequests.push(newRequest);
@@ -203,6 +220,12 @@ export const apiService = {
   async getAllPayroll(): Promise<PayrollRecord[]> {
     const storedPayroll = localStorage.getItem("mockPayrollData");
     return storedPayroll ? JSON.parse(storedPayroll) : [];
+  },
+
+  async getUserPayroll(userId: number): Promise<PayrollRecord[]> {
+    const storedPayroll = localStorage.getItem("mockPayrollData");
+    const payrollRecords: PayrollRecord[] = storedPayroll ? JSON.parse(storedPayroll) : [];
+    return payrollRecords.filter(record => record.employeeId === userId);
   },
   
   async processPayroll(employeeId: number, month: string, year: number): Promise<PayrollRecord> {
@@ -265,6 +288,12 @@ export const apiService = {
     const storedOvertime = localStorage.getItem("mockOvertimeData");
     return storedOvertime ? JSON.parse(storedOvertime) : [];
   },
+
+  async getUserOvertime(userId: number): Promise<OvertimeRecord[]> {
+    const storedOvertime = localStorage.getItem("mockOvertimeData");
+    const overtimeRecords: OvertimeRecord[] = storedOvertime ? JSON.parse(storedOvertime) : [];
+    return overtimeRecords.filter(record => record.employeeId === userId);
+  },
   
   async createOvertimeRequest(request: Omit<OvertimeRecord, 'id' | 'status' | 'approvedBy'>, employeeId: number): Promise<OvertimeRecord> {
     const storedOvertime = localStorage.getItem("mockOvertimeData");
@@ -302,6 +331,56 @@ export const apiService = {
     
     localStorage.setItem("mockOvertimeData", JSON.stringify(overtimeRecords));
     return overtimeRecords[recordIndex];
+  },
+
+  async checkIn(userId: number): Promise<AttendanceRecord> {
+    const today = formatDate(new Date());
+    
+    // Check if user has already checked in today
+    const attendanceRecords = await this.getAllAttendance();
+    const existingRecord = attendanceRecords.find(
+      record => record.employeeId === userId && record.date === today
+    );
+    
+    if (existingRecord) {
+      throw new Error("You have already checked in today");
+    }
+    
+    // Create new attendance record
+    const newRecord: AttendanceRecord = {
+      id: Math.floor(Math.random() * 10000),
+      employeeId: userId,
+      date: today,
+      checkIn: new Date().toISOString(),
+      checkOut: null,
+    };
+    
+    attendanceRecords.push(newRecord);
+    localStorage.setItem("mockAttendanceData", JSON.stringify(attendanceRecords));
+    return newRecord;
+  },
+  
+  async checkOut(userId: number): Promise<AttendanceRecord | null> {
+    const today = formatDate(new Date());
+    
+    // Get today's attendance record
+    const attendanceRecords = await this.getAllAttendance();
+    const recordIndex = attendanceRecords.findIndex(
+      record => record.employeeId === userId && record.date === today && record.checkIn && !record.checkOut
+    );
+    
+    if (recordIndex === -1) {
+      throw new Error("No active check-in found for today");
+    }
+    
+    // Update record with check-out time
+    attendanceRecords[recordIndex].checkOut = new Date().toISOString();
+    localStorage.setItem("mockAttendanceData", JSON.stringify(attendanceRecords));
+    return attendanceRecords[recordIndex];
+  },
+
+  async submitOvertimeRequest(userId: number, request: { date: string, hours: number, rate: number, reason: string }): Promise<OvertimeRecord> {
+    return this.createOvertimeRequest(request, userId);
   },
 
   async adminOverrideCheckIn(employeeId: number, checkInTime: Date, adminId: number): Promise<AttendanceRecord | null> {

@@ -1,179 +1,155 @@
 
 import { useState } from "react";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { apiService } from "@/services/api";
-
-const leaveTypes = [
-  { value: "annual", label: "Annual Leave" },
-  { value: "sick", label: "Sick Leave" },
-  { value: "family", label: "Family Leave" },
-  { value: "unpaid", label: "Unpaid Leave" },
-];
+import { toast } from "sonner";
+import { format, addDays } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { CalendarIcon } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface LeaveRequestFormProps {
-  onSubmit?: () => void;
+  onSubmit: () => void;
 }
 
 export default function LeaveRequestForm({ onSubmit }: LeaveRequestFormProps) {
   const { user } = useAuth();
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
-  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
-  const [leaveType, setLeaveType] = useState("");
-  const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  const [date, setDate] = useState<{
+    from: Date;
+    to: Date;
+  }>({
+    from: new Date(),
+    to: addDays(new Date(), 1),
+  });
+  const [reason, setReason] = useState("");
+  const [leaveType, setLeaveType] = useState("annual");
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!startDate || !endDate || !leaveType || !reason) {
-      toast.error("Please fill all required fields");
-      return;
-    }
-    
-    if (startDate > endDate) {
-      toast.error("End date cannot be before start date");
-      return;
-    }
+    if (!user) return;
     
     try {
       setIsSubmitting(true);
       
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-      
-      await apiService.createLeaveRequest({
-        employeeId: user.id,
-        startDate,
-        endDate,
+      // Add leaveType to the request creation
+      const requestData = {
+        startDate: date.from.toISOString(),
+        endDate: date.to.toISOString(),
+        reason,
         type: leaveType,
-        reason
-      });
+      };
+      
+      await apiService.createLeaveRequest(requestData, user.id);
       
       toast.success("Leave request submitted successfully");
-      
-      // Reset form
-      setStartDate(undefined);
-      setEndDate(undefined);
-      setLeaveType("");
+      setDate({
+        from: new Date(),
+        to: addDays(new Date(), 1),
+      });
       setReason("");
-      
-      // Call onSubmit callback if provided
-      if (onSubmit) {
-        onSubmit();
-      }
-    } catch (error) {
-      console.error("Failed to submit leave request", error);
-      toast.error("Failed to submit leave request");
+      setLeaveType("annual");
+      onSubmit();
+    } catch (error: any) {
+      toast.error(error.message || "Failed to submit leave request");
     } finally {
       setIsSubmitting(false);
     }
   };
-
+  
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base font-medium">Request Leave</CardTitle>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4">
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Leave Type</label>
-            <Select value={leaveType} onValueChange={setLeaveType}>
-              <SelectTrigger>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="leave-type">Leave Type</Label>
+            <Select value={leaveType} onValueChange={setLeaveType} required>
+              <SelectTrigger id="leave-type" className="w-full">
                 <SelectValue placeholder="Select leave type" />
               </SelectTrigger>
               <SelectContent>
-                {leaveTypes.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
+                <SelectItem value="annual">Annual Leave</SelectItem>
+                <SelectItem value="sick">Sick Leave</SelectItem>
+                <SelectItem value="personal">Personal Leave</SelectItem>
+                <SelectItem value="maternity">Maternity Leave</SelectItem>
+                <SelectItem value="paternity">Paternity Leave</SelectItem>
+                <SelectItem value="unpaid">Unpaid Leave</SelectItem>
               </SelectContent>
             </Select>
           </div>
           
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Start Date</label>
+          <div className="space-y-2">
+            <Label htmlFor="leave-dates">Date Range</Label>
+            <div className="grid gap-2">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
-                    variant="outline"
+                    id="leave-dates"
+                    variant={"outline"}
                     className={cn(
                       "w-full justify-start text-left font-normal",
-                      !startDate && "text-muted-foreground"
+                      !date && "text-muted-foreground"
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, "PPP") : "Select date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={setStartDate}
-                    initialFocus
-                    className="pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            
-            <div className="space-y-1">
-              <label className="text-sm font-medium">End Date</label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !endDate && "text-muted-foreground"
+                    {date.from ? (
+                      date.to ? (
+                        <>
+                          {format(date.from, "PPP")} - {format(date.to, "PPP")}
+                        </>
+                      ) : (
+                        format(date.from, "PPP")
+                      )
+                    ) : (
+                      <span>Pick a date range</span>
                     )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? format(endDate, "PPP") : "Select date"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0" align="start">
                   <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={setEndDate}
                     initialFocus
-                    className="pointer-events-auto"
+                    mode="range"
+                    defaultMonth={date.from}
+                    selected={{ from: date.from, to: date.to }}
+                    onSelect={(range) => {
+                      if (range?.from && range?.to) {
+                        setDate({ from: range.from, to: range.to });
+                      }
+                    }}
+                    numberOfMonths={2}
                   />
                 </PopoverContent>
               </Popover>
             </div>
           </div>
           
-          <div className="space-y-1">
-            <label className="text-sm font-medium">Reason</label>
-            <Input
-              placeholder="Brief explanation for your leave request"
+          <div className="space-y-2">
+            <Label htmlFor="leave-reason">Reason for Leave</Label>
+            <Textarea
+              id="leave-reason"
+              placeholder="Please provide details about your leave request"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
+              className="h-20"
+              required
             />
           </div>
-        </CardContent>
-        <CardFooter>
-          <Button type="submit" disabled={isSubmitting} className="w-full">
+          
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Submitting..." : "Submit Request"}
           </Button>
-        </CardFooter>
-      </form>
+        </form>
+      </CardContent>
     </Card>
   );
 }

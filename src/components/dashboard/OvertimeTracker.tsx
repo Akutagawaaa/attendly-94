@@ -1,184 +1,198 @@
 
 import { useState } from "react";
+import { OvertimeRecord } from "@/services/api";
 import { useAuth } from "@/context/AuthContext";
-import { apiService, OvertimeRecord } from "@/services/api";
+import { apiService } from "@/services/api";
 import { toast } from "sonner";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { format, parseISO } from "date-fns";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
-import { formatDate } from "@/lib/utils";
-import { Clock, Plus } from "lucide-react";
+import { CalendarIcon, Clock, DollarSign } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 interface OvertimeTrackerProps {
   overtimeRecords: OvertimeRecord[];
   onOvertimeSubmit: () => void;
-  loading: boolean;
+  loading?: boolean;
 }
 
-export default function OvertimeTracker({ overtimeRecords, onOvertimeSubmit, loading }: OvertimeTrackerProps) {
+export default function OvertimeTracker({ overtimeRecords, onOvertimeSubmit, loading = false }: OvertimeTrackerProps) {
   const { user } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({
-    date: new Date().toISOString().split('T')[0],
+    date: new Date(),
     hours: 1,
-    reason: "",
     rate: 1.5,
+    reason: "",
   });
-
-  if (!user) return null;
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!user) return;
     
     try {
       setIsSubmitting(true);
       
-      await apiService.submitOvertimeRequest({
-        employeeId: user.id,
-        date: formData.date,
+      await apiService.submitOvertimeRequest(user.id, {
+        date: formData.date.toISOString(),
         hours: formData.hours,
-        reason: formData.reason,
         rate: formData.rate,
+        reason: formData.reason,
       });
       
       toast.success("Overtime request submitted successfully");
-      setOpen(false);
+      setShowForm(false);
       setFormData({
-        date: new Date().toISOString().split('T')[0],
+        date: new Date(),
         hours: 1,
-        reason: "",
         rate: 1.5,
+        reason: "",
       });
       onOvertimeSubmit();
-    } catch (error) {
-      console.error("Failed to submit overtime request", error);
-      toast.error("Failed to submit overtime request");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to submit overtime request");
     } finally {
       setIsSubmitting(false);
     }
   };
-
+  
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "approved":
-        return <Badge className="bg-green-500">Approved</Badge>;
+        return <Badge className="bg-green-500 text-white">Approved</Badge>;
       case "rejected":
-        return <Badge variant="destructive">Rejected</Badge>;
+        return <Badge className="bg-red-500 text-white">Rejected</Badge>;
       default:
-        return <Badge variant="outline" className="bg-yellow-100 text-yellow-800 border-yellow-200">Pending</Badge>;
+        return <Badge className="bg-yellow-500 text-white">Pending</Badge>;
     }
   };
-
+  
+  // Sort by date, newest first
+  const sortedRecords = [...overtimeRecords].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+  
   return (
-    <Card className="h-full">
-      <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
-        <div>
-          <CardTitle>Overtime Tracker</CardTitle>
-          <CardDescription>Request and track overtime hours</CardDescription>
-        </div>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Plus className="h-4 w-4 mr-1" /> New Request
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Submit Overtime Request</DialogTitle>
-              <DialogDescription>
-                Enter details about your overtime work for approval.
-              </DialogDescription>
-            </DialogHeader>
-            <form onSubmit={handleSubmit}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="date">Date</Label>
-                    <Input
-                      id="date"
-                      type="date"
-                      value={formData.date}
-                      onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="hours">Hours</Label>
-                    <Input
-                      id="hours"
-                      type="number"
-                      min="0.5"
-                      step="0.5"
-                      value={formData.hours}
-                      onChange={(e) => setFormData({ ...formData, hours: parseFloat(e.target.value) })}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="rate">Overtime Rate</Label>
-                  <select
-                    id="rate"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2"
-                    value={formData.rate}
-                    onChange={(e) => setFormData({ ...formData, rate: parseFloat(e.target.value) })}
-                  >
-                    <option value="1.5">Regular (1.5x)</option>
-                    <option value="2">Double (2x)</option>
-                    <option value="3">Holiday (3x)</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reason">Reason</Label>
-                  <Textarea
-                    id="reason"
-                    placeholder="Explain why overtime was needed"
-                    value={formData.reason}
-                    onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                    required
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Submitting..." : "Submit Request"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-base font-medium">Overtime Tracker</CardTitle>
+        <Button size="sm" onClick={() => setShowForm(!showForm)}>
+          {showForm ? "Cancel" : "Request Overtime"}
+        </Button>
       </CardHeader>
       <CardContent>
-        {loading ? (
-          <div className="flex justify-center my-8">
+        {showForm ? (
+          <form onSubmit={handleSubmit} className="space-y-4 mt-2">
+            <div className="space-y-2">
+              <Label htmlFor="overtime-date">Date</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={"outline"}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !formData.date && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {formData.date ? format(formData.date, "PPP") : <span>Pick a date</span>}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={formData.date}
+                    onSelect={(date) => setFormData({ ...formData, date: date || new Date() })}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="overtime-hours">Hours</Label>
+                <Input
+                  id="overtime-hours"
+                  type="number"
+                  min="0.5"
+                  step="0.5"
+                  value={formData.hours}
+                  onChange={(e) => setFormData({ ...formData, hours: parseFloat(e.target.value) })}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="overtime-rate">Rate Multiplier</Label>
+                <Input
+                  id="overtime-rate"
+                  type="number"
+                  min="1"
+                  step="0.5"
+                  value={formData.rate}
+                  onChange={(e) => setFormData({ ...formData, rate: parseFloat(e.target.value) })}
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="overtime-reason">Reason</Label>
+              <Textarea
+                id="overtime-reason"
+                placeholder="Briefly describe why overtime was needed"
+                value={formData.reason}
+                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                className="h-20"
+                required
+              />
+            </div>
+            
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit Request"}
+            </Button>
+          </form>
+        ) : loading ? (
+          <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
-        ) : overtimeRecords.length === 0 ? (
-          <div className="text-center py-8 space-y-3 text-muted-foreground">
-            <Clock className="h-12 w-12 mx-auto opacity-20" />
-            <p>No overtime records found.</p>
-            <p className="text-sm">Submit a new request when you work overtime hours.</p>
+        ) : sortedRecords.length === 0 ? (
+          <div className="text-center py-12 text-muted-foreground">
+            <p>No overtime records found</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {overtimeRecords.map((record) => (
-              <div key={record.id} className="border rounded-md p-3 hover:bg-muted/50 transition-colors">
+          <div className="space-y-3 mt-2">
+            {sortedRecords.map((record) => (
+              <div
+                key={record.id}
+                className="border p-3 rounded-lg hover:bg-muted/30 transition-colors"
+              >
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="font-medium">{formatDate(new Date(record.date))}</p>
-                    <p className="text-sm text-muted-foreground mt-1">{record.reason}</p>
+                    <p className="font-medium">{format(parseISO(record.date), "MMMM d, yyyy")}</p>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
+                      <Clock className="h-3 w-3" />
+                      <span>{record.hours} hour{record.hours !== 1 ? "s" : ""}</span>
+                      <span className="mx-1">•</span>
+                      <DollarSign className="h-3 w-3" />
+                      <span>{record.rate}x rate</span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    {getStatusBadge(record.status)}
-                    <p className="text-sm font-medium mt-1">{record.hours} hours ({record.rate}x)</p>
-                  </div>
+                  {getStatusBadge(record.status)}
                 </div>
+                {record.reason && (
+                  <div className="mt-2 text-sm">
+                    <p className="line-clamp-2">{record.reason}</p>
+                  </div>
+                )}
               </div>
             ))}
           </div>

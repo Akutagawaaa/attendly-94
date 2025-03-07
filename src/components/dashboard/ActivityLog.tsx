@@ -12,8 +12,8 @@ export default function ActivityLog({ records }: ActivityLogProps) {
   // Sort records by date, most recent first
   const sortedRecords = [...records].sort((a, b) => {
     // Get the latest action from each record
-    const aTime = a.checkOut?.getTime() || a.checkIn.getTime();
-    const bTime = b.checkOut?.getTime() || b.checkIn.getTime();
+    const aTime = a.checkOut ? new Date(a.checkOut).getTime() : a.checkIn ? new Date(a.checkIn).getTime() : 0;
+    const bTime = b.checkOut ? new Date(b.checkOut).getTime() : b.checkIn ? new Date(b.checkIn).getTime() : 0;
     return bTime - aTime;
   });
   
@@ -24,23 +24,25 @@ export default function ActivityLog({ records }: ActivityLogProps) {
   const activities: ActivityItem[] = [];
   
   recentRecords.forEach((record) => {
-    // Add check-in activity
-    activities.push({
-      id: `${record.id}-in`,
-      date: record.date,
-      time: formatTime(record.checkIn),
-      timestamp: record.checkIn.getTime(),
-      type: "check-in",
-      recordId: record.id,
-    });
+    // Add check-in activity if it exists
+    if (record.checkIn) {
+      activities.push({
+        id: `${record.id}-in`,
+        date: record.date,
+        time: formatTime(new Date(record.checkIn)),
+        timestamp: new Date(record.checkIn).getTime(),
+        type: "check-in",
+        recordId: record.id,
+      });
+    }
     
     // Add check-out activity if exists
     if (record.checkOut) {
       activities.push({
         id: `${record.id}-out`,
         date: record.date,
-        time: formatTime(record.checkOut),
-        timestamp: record.checkOut.getTime(),
+        time: formatTime(new Date(record.checkOut)),
+        timestamp: new Date(record.checkOut).getTime(),
         type: "check-out",
         recordId: record.id,
       });

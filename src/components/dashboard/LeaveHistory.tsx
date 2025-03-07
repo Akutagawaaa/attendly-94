@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { LeaveRequest } from "@/services/api";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { Calendar, Clock, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -27,13 +27,13 @@ export default function LeaveHistory({ leaveRequests, loading = false }: LeaveHi
     }
   };
 
-  const formatDate = (date: Date) => {
-    return format(new Date(date), "MMM dd, yyyy");
+  const formatDate = (dateStr: string) => {
+    return format(parseISO(dateStr), "MMM dd, yyyy");
   };
 
-  const calculateDuration = (start: Date, end: Date) => {
-    const startDate = new Date(start);
-    const endDate = new Date(end);
+  const calculateDuration = (startStr: string, endStr: string) => {
+    const startDate = parseISO(startStr);
+    const endDate = parseISO(endStr);
     const diffTime = Math.abs(endDate.getTime() - startDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // Include both start and end days
     return `${diffDays} day${diffDays === 1 ? "" : "s"}`;

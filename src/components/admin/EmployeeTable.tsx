@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { User } from "@/context/AuthContext";
+import { User } from "@/services/api";
 import { AttendanceRecord } from "@/services/api";
 import { formatDate, formatTime } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -91,8 +91,17 @@ export default function EmployeeTable({ employees, attendanceRecords }: Employee
     }
     
     return employeeRecords.reduce((latest, record) => {
-      const latestTime = latest.checkOut?.getTime() || latest.checkIn.getTime();
-      const currentTime = record.checkOut?.getTime() || record.checkIn.getTime();
+      const latestTime = record.checkOut 
+        ? new Date(record.checkOut).getTime() 
+        : record.checkIn 
+          ? new Date(record.checkIn).getTime() 
+          : 0;
+          
+      const currentTime = record.checkOut 
+        ? new Date(record.checkOut).getTime() 
+        : record.checkIn 
+          ? new Date(record.checkIn).getTime() 
+          : 0;
       
       return currentTime > latestTime ? record : latest;
     });
@@ -236,8 +245,10 @@ export default function EmployeeTable({ employees, attendanceRecords }: Employee
                             <Calendar className="h-3 w-3" />
                             <span>
                               {latestRecord.checkOut
-                                ? `Checked out at ${formatTime(latestRecord.checkOut)}`
-                                : `Checked in at ${formatTime(latestRecord.checkIn)}`}
+                                ? `Checked out at ${formatTime(new Date(latestRecord.checkOut))}`
+                                : latestRecord.checkIn 
+                                  ? `Checked in at ${formatTime(new Date(latestRecord.checkIn))}`
+                                  : "No activity"}
                             </span>
                           </div>
                         ) : (

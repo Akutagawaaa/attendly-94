@@ -11,7 +11,7 @@ import { formatTime } from "@/lib/utils";
 interface CheckInOutProps {
   onCheckInOut: () => void;
   checkedIn: boolean;
-  lastCheckIn: Date | null;
+  lastCheckIn: string | null;
 }
 
 export default function CheckInOut({ onCheckInOut, checkedIn, lastCheckIn }: CheckInOutProps) {
@@ -134,7 +134,7 @@ export default function CheckInOut({ onCheckInOut, checkedIn, lastCheckIn }: Che
               <div className="space-y-3">
                 <div className="bg-green-50 text-green-700 text-xs font-medium py-2 px-3 rounded-md flex items-center justify-center">
                   <div className="w-2 h-2 rounded-full bg-green-500 mr-2 animate-pulse"></div>
-                  Checked in at {lastCheckIn ? formatTime(lastCheckIn) : ''}
+                  Checked in at {lastCheckIn ? formatTime(new Date(lastCheckIn)) : ''}
                 </div>
                 <ButtonCustom
                   onClick={handleCheckOut}

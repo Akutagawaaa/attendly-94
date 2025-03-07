@@ -1,8 +1,8 @@
 
 import { useState } from "react";
 import { LeaveRequest } from "@/services/api";
-import { User } from "@/context/AuthContext";
-import { format } from "date-fns";
+import { User } from "@/services/api";
+import { format, parseISO } from "date-fns";
 import {
   Card,
   CardContent,
@@ -126,10 +126,10 @@ export default function LeaveManagement({
                       {request.type.charAt(0).toUpperCase() + request.type.slice(1)}
                     </TableCell>
                     <TableCell>
-                      {format(new Date(request.startDate), "MMM dd")} - {format(new Date(request.endDate), "MMM dd, yyyy")}
+                      {format(parseISO(request.startDate), "MMM dd")} - {format(parseISO(request.endDate), "MMM dd, yyyy")}
                     </TableCell>
                     <TableCell>{getStatusBadge(request.status)}</TableCell>
-                    <TableCell>{format(new Date(request.createdAt), "MMM dd, yyyy")}</TableCell>
+                    <TableCell>{format(parseISO(request.createdAt), "MMM dd, yyyy")}</TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
@@ -157,7 +157,7 @@ export default function LeaveManagement({
               <DialogHeader>
                 <DialogTitle>Leave Request Details</DialogTitle>
                 <DialogDescription>
-                  Submitted on {format(new Date(selectedRequest.createdAt), "MMMM dd, yyyy")}
+                  Submitted on {format(parseISO(selectedRequest.createdAt), "MMMM dd, yyyy")}
                 </DialogDescription>
               </DialogHeader>
               
@@ -183,7 +183,7 @@ export default function LeaveManagement({
                   <div className="flex items-center gap-2">
                     <CalendarClock className="h-4 w-4" />
                     <span>
-                      {format(new Date(selectedRequest.startDate), "MMM dd, yyyy")} - {format(new Date(selectedRequest.endDate), "MMM dd, yyyy")}
+                      {format(parseISO(selectedRequest.startDate), "MMM dd, yyyy")} - {format(parseISO(selectedRequest.endDate), "MMM dd, yyyy")}
                     </span>
                   </div>
                 </div>

@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiService, AttendanceRecord, LeaveRequest, PayrollRecord, OvertimeRecord } from "@/services/api";
-import { User } from "@/context/AuthContext";
+import { User } from "@/services/api";
 import AttendanceStats from "@/components/admin/AttendanceStats";
 import EmployeeTable from "@/components/admin/EmployeeTable";
 import ReportsPanel from "@/components/admin/ReportsPanel";
@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { UserCog, UserPlus } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Admin() {
   const { user, isAdmin } = useAuth();
@@ -58,7 +59,8 @@ export default function Admin() {
           apiService.getAllOvertime()
         ]);
         
-        setEmployees(employeeData);
+        // Handle type conversion properly
+        setEmployees(employeeData as User[]);
         setAttendanceRecords(attendanceData);
         setLeaveRequests(leaveData);
         setPayrollRecords(payrollData);
