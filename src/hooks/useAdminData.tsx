@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { User, AttendanceRecord, LeaveRequest, PayrollRecord, OvertimeRecord } from '@/models/types';
 
@@ -35,106 +36,106 @@ export function useAdminData() {
     const mockUsers: User[] = [
       {
         id: 1,
+        employeeId: generateEmployeeId(),
         name: "John Doe",
         email: "john.doe@example.com",
         password: "password123",
         role: "employee",
         department: "Engineering",
         avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=John",
-        employeeId: generateEmployeeId(),
       },
       {
         id: 2,
+        employeeId: generateEmployeeId(),
         name: "Jane Smith",
         email: "jane.smith@example.com",
         password: "password123",
         role: "admin",
         department: "Management",
         avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jane",
-        employeeId: generateEmployeeId(),
       },
       {
         id: 3,
+        employeeId: generateEmployeeId(),
         name: "Robert Johnson",
         email: "robert.johnson@example.com",
         password: "password123",
         role: "employee",
         department: "Design",
         avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Robert",
-        employeeId: generateEmployeeId(),
       },
       {
         id: 4,
+        employeeId: generateEmployeeId(),
         name: "Emily Davis",
         email: "emily.davis@example.com",
         password: "password123",
         role: "employee",
         department: "Marketing",
         avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Emily",
-        employeeId: generateEmployeeId(),
       },
       {
         id: 5,
+        employeeId: generateEmployeeId(),
         name: "Michael Wilson",
         email: "michael.wilson@example.com",
         password: "password123",
         role: "employee",
         department: "HR",
         avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Michael",
-        employeeId: generateEmployeeId(),
       },
       {
         id: 6, 
+        employeeId: generateEmployeeId(),
         name: "Sarah Brown",
         email: "sarah.brown@example.com",
         password: "password123",
         role: "employee",
         department: "Finance",
         avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-        employeeId: generateEmployeeId(),
       },
       {
         id: 7,
+        employeeId: generateEmployeeId(),
         name: "David Lee",
         email: "david.lee@example.com",
         password: "password123",
         role: "employee",
         department: "Engineering",
         avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=David",
-        employeeId: generateEmployeeId(),
       },
       {
         id: 8,
+        employeeId: generateEmployeeId(),
         name: "Jennifer Taylor",
         email: "jennifer.taylor@example.com",
         password: "password123",
         role: "employee",
         department: "Sales",
         avatarUrl: "https://api.dicebear.com/7.x/avataaars/svg?seed=Jennifer",
-        employeeId: generateEmployeeId(),
       },
     ];
 
     const mockAttendanceRecords: AttendanceRecord[] = [
-      { id: 1, userId: 1, date: "October 10, 2024", checkIn: "2024-10-10T08:55:00", checkOut: "2024-10-10T17:00:00" },
-      { id: 2, userId: 2, date: "October 10, 2024", checkIn: "2024-10-10T09:02:00", checkOut: "2024-10-10T17:30:00" },
-      { id: 3, userId: 1, date: "October 11, 2024", checkIn: "2024-10-11T08:50:00", checkOut: "2024-10-11T17:10:00" },
-      { id: 4, userId: 2, date: "October 11, 2024", checkIn: "2024-10-11T09:05:00", checkOut: "2024-10-11T17:20:00" },
+      { id: 1, employeeId: 1, date: "October 10, 2024", checkIn: "2024-10-10T08:55:00", checkOut: "2024-10-10T17:00:00" },
+      { id: 2, employeeId: 2, date: "October 10, 2024", checkIn: "2024-10-10T09:02:00", checkOut: "2024-10-10T17:30:00" },
+      { id: 3, employeeId: 1, date: "October 11, 2024", checkIn: "2024-10-11T08:50:00", checkOut: "2024-10-11T17:10:00" },
+      { id: 4, employeeId: 2, date: "October 11, 2024", checkIn: "2024-10-11T09:05:00", checkOut: "2024-10-11T17:20:00" },
     ];
 
     const mockLeaveRequests: LeaveRequest[] = [
-      { id: 1, userId: 3, startDate: "October 15, 2024", endDate: "October 17, 2024", reason: "Vacation", status: "approved" },
-      { id: 2, userId: 4, startDate: "October 16, 2024", endDate: "October 16, 2024", reason: "Sick leave", status: "pending" },
+      { id: 1, employeeId: 3, startDate: "October 15, 2024", endDate: "October 17, 2024", reason: "Vacation", status: "approved", type: "vacation", createdAt: "2024-10-05T10:00:00" },
+      { id: 2, employeeId: 4, startDate: "October 16, 2024", endDate: "October 16, 2024", reason: "Sick leave", status: "pending", type: "sick", createdAt: "2024-10-08T14:30:00" },
     ];
 
     const mockPayrollRecords: PayrollRecord[] = [
-      { id: 1, userId: 5, date: "October 31, 2024", amount: 5000, status: "paid" },
-      { id: 2, userId: 6, date: "October 31, 2024", amount: 6000, status: "pending" },
+      { id: 1, employeeId: 5, month: "October", year: 2024, baseSalary: 5000, overtimePay: 200, bonus: 100, deductions: 300, netSalary: 5000, status: "paid", processedDate: "2024-10-31T10:00:00", paymentDate: "2024-10-31T14:00:00" },
+      { id: 2, employeeId: 6, month: "October", year: 2024, baseSalary: 6000, overtimePay: 0, bonus: 0, deductions: 400, netSalary: 5600, status: "processed" },
     ];
 
     const mockOvertimeRecords: OvertimeRecord[] = [
-      { id: 1, userId: 7, date: "October 12, 2024", hours: 2, description: "Project deadline", status: "approved" },
-      { id: 2, userId: 8, date: "October 13, 2024", hours: 3, description: "Urgent task", status: "pending" },
+      { id: 1, employeeId: 7, date: "October 12, 2024", hours: 2, rate: 1.5, reason: "Project deadline", status: "approved", approvedBy: 2 },
+      { id: 2, employeeId: 8, date: "October 13, 2024", hours: 3, rate: 1.5, reason: "Urgent task", status: "pending" },
     ];
 
     setData({
