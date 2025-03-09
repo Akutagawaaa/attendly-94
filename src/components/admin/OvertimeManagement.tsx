@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { OvertimeRecord, User } from "@/models/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,7 +25,12 @@ interface OvertimeManagementProps {
   onOvertimeUpdate: () => void;
 }
 
-export default function OvertimeManagement({ overtimeRecords, employees, loading, onOvertimeUpdate }: OvertimeManagementProps) {
+export default function OvertimeManagement({ 
+  overtimeRecords, 
+  employees, 
+  loading, 
+  onOvertimeUpdate 
+}: OvertimeManagementProps) {
   const { user } = useAuth();
   const [filterEmployee, setFilterEmployee] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -80,7 +84,6 @@ export default function OvertimeManagement({ overtimeRecords, employees, loading
     }
   };
   
-  // Apply filters
   const filteredRecords = overtimeRecords.filter(record => {
     if (filterEmployee !== "all" && record.employeeId !== parseInt(filterEmployee)) return false;
     if (filterStatus !== "all" && record.status !== filterStatus) return false;

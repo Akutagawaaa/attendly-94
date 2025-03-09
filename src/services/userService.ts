@@ -50,6 +50,13 @@ export const userService = {
       throw new Error("Email already registered");
     }
     
+    // Generate a unique employee ID (format: AT-YYYY-XXXX)
+    const generateEmployeeId = () => {
+      const year = new Date().getFullYear();
+      const randomPart = Math.floor(1000 + Math.random() * 9000);
+      return `AT-${year}-${randomPart}`;
+    };
+    
     const newUser: User = {
       id: Math.floor(Math.random() * 10000) + 10,
       name: data.name,
@@ -57,6 +64,8 @@ export const userService = {
       password: data.password,
       role: data.role,
       department: data.department,
+      designation: data.designation,
+      employeeId: generateEmployeeId(),
       avatarUrl: data.avatarUrl,
     };
     

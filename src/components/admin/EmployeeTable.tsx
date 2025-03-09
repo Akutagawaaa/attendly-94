@@ -1,7 +1,5 @@
-
 import { useState } from "react";
-import { User } from "@/services/api";
-import { AttendanceRecord } from "@/services/api";
+import { User, AttendanceRecord } from "@/models/types";
 import { formatDate, formatTime } from "@/lib/utils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
@@ -24,7 +22,6 @@ export default function EmployeeTable({ employees, attendanceRecords }: Employee
     direction: "ascending",
   });
   
-  // Filter records by search term
   const filteredEmployees = employees.filter((employee) => {
     const searchTermLower = searchTerm.toLowerCase();
     return (
@@ -35,7 +32,6 @@ export default function EmployeeTable({ employees, attendanceRecords }: Employee
     );
   });
   
-  // Sort employees
   const sortedEmployees = [...filteredEmployees].sort((a, b) => {
     if (sortConfig.key === "name") {
       return sortConfig.direction === "ascending"
@@ -57,7 +53,6 @@ export default function EmployeeTable({ employees, attendanceRecords }: Employee
     return 0;
   });
   
-  // Calculate attendance statistics
   const getAttendanceStatus = (employeeId: number) => {
     const today = new Date();
     const formattedDate = formatDate(today);
@@ -107,7 +102,6 @@ export default function EmployeeTable({ employees, attendanceRecords }: Employee
     });
   };
   
-  // Handle column sorting
   const requestSort = (key: string) => {
     let direction: "ascending" | "descending" = "ascending";
     
@@ -118,7 +112,6 @@ export default function EmployeeTable({ employees, attendanceRecords }: Employee
     setSortConfig({ key, direction });
   };
   
-  // Get status badge color
   const getStatusBadgeColor = (status: string) => {
     switch (status) {
       case "present":

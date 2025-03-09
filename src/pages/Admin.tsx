@@ -1,13 +1,28 @@
+
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import AdminTabs from "@/components/admin/AdminTabs";
 import OrganizationLogo from "@/components/admin/OrganizationLogo";
+import { User, AttendanceRecord, LeaveRequest, PayrollRecord, OvertimeRecord } from "@/models/types";
+import { userService } from "@/services/userService";
+import { attendanceService } from "@/services/attendanceService";
+import { leaveService } from "@/services/leaveService";
+import { payrollService } from "@/services/payrollService";
+import { overtimeService } from "@/services/overtimeService";
+import { toast } from "sonner";
 
 export default function Admin() {
   const { user, isAdmin } = useAuth();
   const navigate = useNavigate();
+  
+  const [employees, setEmployees] = useState<User[]>([]);
+  const [attendanceRecords, setAttendanceRecords] = useState<AttendanceRecord[]>([]);
+  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
+  const [payrollRecords, setPayrollRecords] = useState<PayrollRecord[]>([]);
+  const [overtimeRecords, setOvertimeRecords] = useState<OvertimeRecord[]>([]);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
     if (!user) {
@@ -18,7 +33,86 @@ export default function Admin() {
     if (!isAdmin) {
       navigate("/dashboard");
     }
+    
+    fetchData();
   }, [user, isAdmin, navigate]);
+  
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch all data needed for admin dashboard
+      const employeesData = await userService.getAllEmployees();
+      const attendanceData = await attendanceService.getAllAttendanceRecords();
+      const leaveData = await leaveService.getAllLeaveRequests();
+      const payrollData = await payrollService.getAllPayrollRecords();
+      const overtimeData = await overtimeService.getAllOvertimeRecords();
+      
+      setEmployees(employeesData);
+      setAttendanceRecords(attendanceData);
+      setLeaveRequests(leaveData);
+      setPayrollRecords(payrollData);
+      setOvertimeRecords(overtimeData);
+    } catch (error) {
+      console.error("Error fetching admin data:", error);
+      toast.error("Failed to load admin data");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handleLeaveStatusUpdate = async (id: number, status: "approved" | "rejected") => {
+    try {
+      await leaveService.updateLeaveStatus(id, status);
+      toast.success(`Leave request ${status}`);
+      // Refresh leave requests
+      const leaveData = await leaveService.getAllLeaveRequests();
+      setLeaveRequests(leaveData);
+    } catch (error) {
+      console.error("Failed to update leave status", error);
+      toast.error("Failed to update leave status");
+    }
+  };
+  
+  const handlePayrollUpdate = async () => {
+    try {
+      // Refresh payroll data
+      const payrollData = await payrollService.getAllPayrollRecords();
+      setPayrollRecords(payrollData);
+      toast.success("Payroll data updated");
+    } catch (error) {
+      console.error("Failed to update payroll data", error);
+      toast.error("Failed to update payroll data");
+    }
+  };
+  
+  const handleOvertimeUpdate = async () => {
+    try {
+      // Refresh overtime data
+      const overtimeData = await overtimeService.getAllOvertimeRecords();
+      setOvertimeRecords(overtimeData);
+      toast.success("Overtime data updated");
+    } catch (error) {
+      console.error("Failed to update overtime data", error);
+      toast.error("Failed to update overtime data");
+    }
+  };
+  
+  const handleOpenOverrideModal = (employeeId: number) => {
+    // This would be handled by AdminOverrideModal component
+    console.log("Opening override modal for employee:", employeeId);
+  };
+  
+  const refreshAttendanceData = async () => {
+    try {
+      const attendanceData = await attendanceService.getAllAttendanceRecords();
+      setAttendanceRecords(attendanceData);
+      toast.success("Attendance data refreshed");
+    } catch (error) {
+      console.error("Failed to refresh attendance data", error);
+      toast.error("Failed to refresh attendance data");
+    }
+  };
   
   if (!user || !isAdmin) {
     return null;
@@ -41,7 +135,19 @@ export default function Admin() {
           </div>
         </div>
         
-        <AdminTabs />
+        <AdminTabs 
+          employees={employees}
+          attendanceRecords={attendanceRecords}
+          leaveRequests={leaveRequests}
+          payrollRecords={payrollRecords}
+          overtimeRecords={overtimeRecords}
+          loading={loading}
+          onLeaveStatusUpdate={handleLeaveStatusUpdate}
+          onPayrollUpdate={handlePayrollUpdate}
+          onOvertimeUpdate={handleOvertimeUpdate}
+          onOpenOverrideModal={handleOpenOverrideModal}
+          refreshAttendanceData={refreshAttendanceData}
+        />
       </div>
     </Layout>
   );

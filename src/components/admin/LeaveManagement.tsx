@@ -1,7 +1,5 @@
-
 import { useState } from "react";
-import { LeaveRequest } from "@/services/api";
-import { User } from "@/services/api";
+import { LeaveRequest, User } from "@/models/types";
 import { format, parseISO } from "date-fns";
 import {
   Card,
@@ -79,7 +77,6 @@ export default function LeaveManagement({
     }
   };
   
-  // Filter pending requests to the top
   const sortedRequests = [...leaveRequests].sort((a, b) => {
     if (a.status === "pending" && b.status !== "pending") return -1;
     if (a.status !== "pending" && b.status === "pending") return 1;
@@ -147,7 +144,6 @@ export default function LeaveManagement({
           </div>
         )}
         
-        {/* Leave Request Details Dialog */}
         {selectedRequest && (
           <Dialog
             open={!!selectedRequest}
