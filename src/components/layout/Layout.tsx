@@ -15,10 +15,10 @@ export default function Layout({ children }: LayoutProps) {
     <div className="flex flex-col min-h-screen">
       <Header />
       
-      <div className="flex-1 bg-gray-50 relative pt-6 pb-16 overflow-x-hidden">
+      <div className="flex-1 bg-gray-50 relative pt-6 pb-24 overflow-x-hidden">
         {/* Organization logo watermark for admin users */}
         {user?.role === "admin" && user?.organizationLogo && (
-          <div className="fixed right-6 bottom-20 opacity-30 pointer-events-none">
+          <div className="fixed right-6 bottom-24 opacity-30 pointer-events-none">
             <img 
               src={user.organizationLogo} 
               alt="Organization logo" 

@@ -106,25 +106,27 @@ export default function Dashboard() {
   
   return (
     <Layout>
-      <div className="container py-6 mb-16">
+      <div className="container py-6 mb-24">
         <div className="mb-6">
           <h1 className="text-3xl font-bold tracking-tight mb-1">Welcome, {user.name}</h1>
           <p className="text-muted-foreground">{new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
         </div>
         
         <Tabs defaultValue="attendance" className="space-y-6">
-          <TabsList className="mb-2 flex flex-wrap">
-            <TabsTrigger value="attendance">Attendance</TabsTrigger>
-            <TabsTrigger value="team">Team</TabsTrigger>
-            <TabsTrigger value="tasks">Tasks</TabsTrigger>
-            <TabsTrigger value="schedule">Schedule</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="payroll">Payroll & Overtime</TabsTrigger>
-            <TabsTrigger value="leave">Leave & Absence</TabsTrigger>
-            <TabsTrigger value="profile">Profile</TabsTrigger>
-          </TabsList>
+          <div className="tabs-container overflow-x-auto pb-2">
+            <TabsList className="mb-2 flex flex-nowrap min-w-max">
+              <TabsTrigger value="attendance">Attendance</TabsTrigger>
+              <TabsTrigger value="team">Team</TabsTrigger>
+              <TabsTrigger value="tasks">Tasks</TabsTrigger>
+              <TabsTrigger value="schedule">Schedule</TabsTrigger>
+              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="payroll">Payroll & Overtime</TabsTrigger>
+              <TabsTrigger value="leave">Leave & Absence</TabsTrigger>
+              <TabsTrigger value="profile">Profile</TabsTrigger>
+            </TabsList>
+          </div>
           
-          <TabsContent value="attendance">
+          <TabsContent value="attendance" className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-1">
                 <CheckInOut
