@@ -15,10 +15,10 @@ export default function Layout({ children }: LayoutProps) {
     <div className="flex flex-col min-h-screen">
       <Header />
       
-      <div className="flex-1 bg-gray-50 relative overflow-hidden">
+      <div className="flex-1 bg-gray-50 relative pt-6 pb-16 overflow-x-hidden">
         {/* Organization logo watermark for admin users */}
         {user?.role === "admin" && user?.organizationLogo && (
-          <div className="fixed right-6 bottom-6 opacity-30 pointer-events-none">
+          <div className="fixed right-6 bottom-20 opacity-30 pointer-events-none">
             <img 
               src={user.organizationLogo} 
               alt="Organization logo" 
@@ -32,7 +32,7 @@ export default function Layout({ children }: LayoutProps) {
         </main>
       </div>
       
-      <footer className="py-4 px-8 border-t bg-white">
+      <footer className="py-4 px-8 border-t bg-white fixed bottom-0 w-full z-20">
         <div className="container flex justify-between items-center">
           <div className="flex items-center">
             <div className="w-8 h-8 mr-2 rounded bg-primary flex items-center justify-center">

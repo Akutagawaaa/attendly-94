@@ -1,7 +1,8 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AttendanceRecord } from "@/services/api";
-import { User } from "@/context/AuthContext";
+import { formatDate } from "@/lib/utils";
+import { AttendanceRecord } from "@/models/types";
+import { User } from "@/models/types";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Users, Clock, CheckCheck, UserX } from "lucide-react";
 
 interface AttendanceStatsProps {
@@ -12,40 +13,36 @@ interface AttendanceStatsProps {
 export default function AttendanceStats({ employees, attendanceRecords }: AttendanceStatsProps) {
   // Calculate today's date
   const today = new Date();
-  const formattedToday = today.toLocaleDateString([], {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-  
+  const formattedToday = formatDate(today, "long");
+
   // Get today's records
   const todayRecords = attendanceRecords.filter(
     (record) => record.date === formattedToday
   );
-  
+
   // Calculate statistics
   const totalEmployees = employees.length;
-  
+
   // Present: Checked in but not checked out
   const presentEmployees = new Set(
     todayRecords
       .filter((record) => record.checkIn && !record.checkOut)
       .map((record) => record.employeeId)
   ).size;
-  
+
   // Completed: Checked in and checked out
   const completedEmployees = new Set(
     todayRecords
       .filter((record) => record.checkIn && record.checkOut)
       .map((record) => record.employeeId)
   ).size;
-  
+
   // Absent: Not checked in
   const checkedInEmployeeIds = new Set(todayRecords.map((record) => record.employeeId));
   const absentEmployees = employees.filter(
     (employee) => !checkedInEmployeeIds.has(employee.id)
   ).length;
-  
+
   const stats = [
     {
       id: 1,
@@ -76,7 +73,7 @@ export default function AttendanceStats({ employees, attendanceRecords }: Attend
       color: "bg-orange-100 text-orange-600",
     },
   ];
-  
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       {stats.map((stat) => (
