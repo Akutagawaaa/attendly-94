@@ -84,9 +84,7 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
@@ -96,11 +94,14 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     @apply overflow-x-hidden;
+    height: 100%;
   }
 
   body {
     @apply bg-background text-foreground overflow-x-hidden;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    height: 100%;
+    position: relative;
   }
 
   /* Fix for the AttendanceStats component */
@@ -196,6 +197,19 @@
   .tabs-container {
     overflow-x: auto;
     max-width: 100%;
+    scrollbar-width: thin;
+    -ms-overflow-style: none;
+  }
+  
+  .tabs-container::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .tabs-container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .tabs-container::-webkit-scrollbar-thumb {
+    @apply bg-muted rounded-full;
   }
 }
-

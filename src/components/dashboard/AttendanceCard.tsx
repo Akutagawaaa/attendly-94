@@ -37,7 +37,7 @@ export default function AttendanceCard({ todayRecord, weeklyRecords }: Attendanc
     : "Not checked in";
   
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-medium">Weekly Summary</CardTitle>
         <CardDescription>Your attendance this week</CardDescription>
@@ -78,7 +78,7 @@ export default function AttendanceCard({ todayRecord, weeklyRecords }: Attendanc
                   {todayRecord?.checkOut ? formatTime(new Date(todayRecord.checkOut)) : "—"}
                 </span>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between col-span-2">
                 <span className="text-muted-foreground">Duration</span>
                 <span className="font-medium">{todayDuration}</span>
               </div>
