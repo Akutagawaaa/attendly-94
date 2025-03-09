@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiService } from "@/services/api";
 import { toast } from "sonner";
-import { User } from "@/context/AuthContext";
+import { User } from "@/models/types";
 import { useAuth } from "@/context/AuthContext";
 
 interface AdminOverrideModalProps {
