@@ -43,10 +43,10 @@ export default function Admin() {
       
       // Fetch all data needed for admin dashboard
       const employeesData = await userService.getAllEmployees();
-      const attendanceData = await attendanceService.getAllAttendanceRecords();
+      const attendanceData = await attendanceService.getAllAttendance();
       const leaveData = await leaveService.getAllLeaveRequests();
-      const payrollData = await payrollService.getAllPayrollRecords();
-      const overtimeData = await overtimeService.getAllOvertimeRecords();
+      const payrollData = await payrollService.getAllPayroll();
+      const overtimeData = await overtimeService.getAllOvertime();
       
       setEmployees(employeesData);
       setAttendanceRecords(attendanceData);
@@ -63,7 +63,7 @@ export default function Admin() {
   
   const handleLeaveStatusUpdate = async (id: number, status: "approved" | "rejected") => {
     try {
-      await leaveService.updateLeaveStatus(id, status);
+      await leaveService.updateLeaveRequestStatus(id, status);
       toast.success(`Leave request ${status}`);
       // Refresh leave requests
       const leaveData = await leaveService.getAllLeaveRequests();
@@ -77,7 +77,7 @@ export default function Admin() {
   const handlePayrollUpdate = async () => {
     try {
       // Refresh payroll data
-      const payrollData = await payrollService.getAllPayrollRecords();
+      const payrollData = await payrollService.getAllPayroll();
       setPayrollRecords(payrollData);
       toast.success("Payroll data updated");
     } catch (error) {
@@ -89,7 +89,7 @@ export default function Admin() {
   const handleOvertimeUpdate = async () => {
     try {
       // Refresh overtime data
-      const overtimeData = await overtimeService.getAllOvertimeRecords();
+      const overtimeData = await overtimeService.getAllOvertime();
       setOvertimeRecords(overtimeData);
       toast.success("Overtime data updated");
     } catch (error) {
@@ -105,7 +105,7 @@ export default function Admin() {
   
   const refreshAttendanceData = async () => {
     try {
-      const attendanceData = await attendanceService.getAllAttendanceRecords();
+      const attendanceData = await attendanceService.getAllAttendance();
       setAttendanceRecords(attendanceData);
       toast.success("Attendance data refreshed");
     } catch (error) {

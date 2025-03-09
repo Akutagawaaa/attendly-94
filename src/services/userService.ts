@@ -66,7 +66,7 @@ export const userService = {
       department: data.department,
       designation: data.designation,
       employeeId: generateEmployeeId(),
-      avatarUrl: data.avatarUrl,
+      avatarUrl: data.avatarUrl || "",
     };
     
     users.push(newUser);
