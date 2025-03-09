@@ -1,17 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
-
-// Mock user types
-export interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: "admin" | "employee";
-  department?: string;
-  avatarUrl?: string;
-  organizationLogo?: string;
-}
+import { User } from "@/models/types";
 
 interface AuthContextType {
   user: User | null;
@@ -23,6 +13,9 @@ interface AuthContextType {
   logout: () => void;
   isAdmin: boolean;
   updateOrganizationLogo: (logoUrl: string) => void;
+  updateProfile: (profileData: Partial<User>) => void;
+  updateAvatar: (avatarUrl: string) => void;
+  updateUserStatus: (status: User['status']) => void;
 }
 
 interface OTPRecord {
@@ -50,6 +43,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(false);
   }, []);
 
+  // Generate a unique employee ID (format: AT-YYYY-XXXX)
+  const generateEmployeeId = () => {
+    const year = new Date().getFullYear();
+    const randomPart = Math.floor(1000 + Math.random() * 9000);
+    return `AT-${year}-${randomPart}`;
+  };
+
   // Mock login function - in a real app, this would call an API
   const login = async (email: string, password: string) => {
     try {
@@ -60,8 +60,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Mock login logic
       const mockUsers: User[] = [
-        { id: 1, name: "Alex Johnson", email: "employee@example.com", role: "employee", department: "Engineering" },
-        { id: 2, name: "Emma Williams", email: "admin@example.com", role: "admin", department: "HR", organizationLogo: "https://i.pravatar.cc/150?img=2" },
+        { 
+          id: 1, 
+          employeeId: "AT-2024-1001", 
+          name: "Alex Johnson", 
+          email: "employee@example.com", 
+          role: "employee", 
+          department: "Engineering",
+          designation: "Software Engineer",
+          status: "available",
+          address: "123 Tech Park, Bangalore"
+        },
+        { 
+          id: 2, 
+          employeeId: "AT-2024-1002", 
+          name: "Emma Williams", 
+          email: "admin@example.com", 
+          role: "admin", 
+          department: "HR", 
+          designation: "HR Manager",
+          status: "available",
+          address: "456 Corporate Avenue, Mumbai",
+          organizationLogo: "https://i.pravatar.cc/150?img=2"
+        },
       ];
       
       const foundUser = mockUsers.find((u) => u.email === email);
@@ -93,10 +114,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // Mock Google login response
       const mockGoogleUser: User = {
         id: 3,
+        employeeId: "AT-2024-1003",
         name: "Sarah Chen",
         email: "sarah@example.com",
         role: "employee",
         department: "Design",
+        designation: "UI/UX Designer",
+        status: "available",
+        address: "789 Design Studio, Delhi",
         avatarUrl: "https://i.pravatar.cc/150?img=5",
       };
       
@@ -160,8 +185,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // OTP is valid, proceed with login
       // Mock user lookup
       const mockUsers: User[] = [
-        { id: 1, name: "Alex Johnson", email: "employee@example.com", role: "employee", department: "Engineering" },
-        { id: 2, name: "Emma Williams", email: "admin@example.com", role: "admin", department: "HR", organizationLogo: "https://i.pravatar.cc/150?img=2" },
+        { 
+          id: 1, 
+          employeeId: "AT-2024-1001", 
+          name: "Alex Johnson", 
+          email: "employee@example.com", 
+          role: "employee", 
+          department: "Engineering",
+          designation: "Software Engineer",
+          status: "available",
+          address: "123 Tech Park, Bangalore"
+        },
+        { 
+          id: 2, 
+          employeeId: "AT-2024-1002", 
+          name: "Emma Williams", 
+          email: "admin@example.com", 
+          role: "admin", 
+          department: "HR", 
+          designation: "HR Manager",
+          status: "available",
+          address: "456 Corporate Avenue, Mumbai",
+          organizationLogo: "https://i.pravatar.cc/150?img=2"
+        },
       ];
       
       const foundUser = mockUsers.find((u) => u.email === email);
@@ -170,10 +216,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Create a new user if not found
         const newUser: User = {
           id: Math.floor(Math.random() * 1000) + 10,
+          employeeId: generateEmployeeId(),
           name: email.split('@')[0],
           email,
           role: "employee",
           department: "New Hire",
+          designation: "New Joiner",
+          status: "available",
         };
         
         localStorage.setItem("user", JSON.stringify(newUser));
@@ -208,6 +257,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(updatedUser);
   };
 
+  // Update user profile data
+  const updateProfile = (profileData: Partial<User>) => {
+    if (!user) return;
+    
+    const updatedUser = { ...user, ...profileData };
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  };
+
+  // Update avatar specifically
+  const updateAvatar = (avatarUrl: string) => {
+    if (!user) return;
+    
+    const updatedUser = { ...user, avatarUrl };
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  };
+
+  // Update user status
+  const updateUserStatus = (status: User['status']) => {
+    if (!user) return;
+    
+    const updatedUser = { ...user, status };
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    setUser(updatedUser);
+  };
+
   const value = {
     user,
     loading,
@@ -218,6 +294,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     isAdmin,
     updateOrganizationLogo,
+    updateProfile,
+    updateAvatar,
+    updateUserStatus,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

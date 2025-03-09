@@ -1,12 +1,10 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { PayrollRecord } from "@/services/api";
-import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { BanknoteIcon, FileTextIcon, DownloadIcon } from "lucide-react";
-import { formatDate } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BadgeIndianRupee, Clock } from "lucide-react";
+import { format } from "date-fns";
 
 interface PayrollSummaryProps {
   payrollRecords: PayrollRecord[];
@@ -14,124 +12,180 @@ interface PayrollSummaryProps {
 }
 
 export default function PayrollSummary({ payrollRecords, loading }: PayrollSummaryProps) {
-  const [selectedRecord, setSelectedRecord] = useState<PayrollRecord | null>(null);
-  
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "paid":
-        return <Badge className="bg-green-500">Paid</Badge>;
-      case "processed":
-        return <Badge className="bg-blue-500">Processed</Badge>;
-      default:
-        return <Badge variant="outline">Draft</Badge>;
-    }
-  };
-  
+  if (loading) {
+    return <PayrollSummarySkeleton />;
+  }
+
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(amount);
   };
   
-  const handleViewPayslip = (record: PayrollRecord) => {
-    setSelectedRecord(record);
+  const formatMonth = (monthName: string, year: number) => {
+    return `${monthName} ${year}`;
   };
+  
+  // Get latest record
+  const latestRecord = payrollRecords.length > 0 
+    ? payrollRecords.sort((a, b) => {
+        const dateA = new Date(`${a.month} 1, ${a.year}`);
+        const dateB = new Date(`${b.month} 1, ${b.year}`);
+        return dateB.getTime() - dateA.getTime();
+      })[0]
+    : null;
   
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-2">
-        <CardTitle>Payroll Summary</CardTitle>
-        <CardDescription>View your payroll history and payment status</CardDescription>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base font-medium">Payroll Summary</CardTitle>
+        <CardDescription>Your salary and payment information</CardDescription>
       </CardHeader>
       <CardContent>
-        {loading ? (
-          <div className="flex justify-center my-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : payrollRecords.length === 0 ? (
-          <div className="text-center py-8 space-y-3 text-muted-foreground">
-            <BanknoteIcon className="h-12 w-12 mx-auto opacity-20" />
-            <p>No payroll records available.</p>
-            <p className="text-sm">Your payroll information will appear here once processed.</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {payrollRecords.map((record) => (
-              <div key={record.id} className="border rounded-md p-3 hover:bg-muted/50 transition-colors">
-                <div className="flex justify-between items-start">
+        <Tabs defaultValue="current">
+          <TabsList className="mb-4 w-full">
+            <TabsTrigger className="flex-1" value="current">Current Period</TabsTrigger>
+            <TabsTrigger className="flex-1" value="history">Payment History</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="current">
+            {latestRecord ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
                   <div>
-                    <p className="font-medium">
-                      {record.month} {record.year}
+                    <p className="text-sm font-medium text-muted-foreground">
+                      {formatMonth(latestRecord.month, latestRecord.year)}
                     </p>
-                    <p className="text-xl font-semibold mt-1">
-                      {formatCurrency(record.netSalary)}
-                    </p>
+                    <h3 className="text-2xl font-bold flex items-center gap-1">
+                      {formatCurrency(latestRecord.netSalary)}
+                      <BadgeIndianRupee className="h-5 w-5 text-primary" />
+                    </h3>
                   </div>
-                  <div className="text-right">
-                    {getStatusBadge(record.status)}
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="mt-2"
-                          onClick={() => handleViewPayslip(record)}
-                        >
-                          <FileTextIcon className="h-3.5 w-3.5 mr-1" /> View Payslip
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>Payslip: {record.month} {record.year}</DialogTitle>
-                          <DialogDescription>
-                            Payment Status: {record.status}
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4 mt-4">
-                          <div className="flex justify-between py-1 border-b">
-                            <span className="text-muted-foreground">Status</span>
-                            <span>{getStatusBadge(record.status)}</span>
-                          </div>
-                          <div className="flex justify-between py-1 border-b">
-                            <span className="text-muted-foreground">Base Salary</span>
-                            <span>{formatCurrency(record.baseSalary)}</span>
-                          </div>
-                          <div className="flex justify-between py-1 border-b">
-                            <span className="text-muted-foreground">Overtime Pay</span>
-                            <span>{formatCurrency(record.overtimePay)}</span>
-                          </div>
-                          <div className="flex justify-between py-1 border-b">
-                            <span className="text-muted-foreground">Bonus</span>
-                            <span>{formatCurrency(record.bonus)}</span>
-                          </div>
-                          <div className="flex justify-between py-1 border-b">
-                            <span className="text-muted-foreground">Deductions</span>
-                            <span>-{formatCurrency(record.deductions)}</span>
-                          </div>
-                          <div className="flex justify-between py-1 font-bold text-lg">
-                            <span>Net Salary</span>
-                            <span>{formatCurrency(record.netSalary)}</span>
-                          </div>
-                          {record.paymentDate && (
-                            <div className="pt-4 text-sm text-muted-foreground">
-                              Payment Date: {formatDate(record.paymentDate)}
-                            </div>
-                          )}
-                          <Button className="w-full">
-                            <DownloadIcon className="h-4 w-4 mr-2" /> Download PDF
-                          </Button>
-                        </div>
-                      </DialogContent>
-                    </Dialog>
+                  <div className={`px-3 py-1 rounded text-xs font-medium ${
+                    latestRecord.status === 'paid' ? 'bg-green-100 text-green-800' :
+                    latestRecord.status === 'processed' ? 'bg-blue-100 text-blue-800' :
+                    'bg-yellow-100 text-yellow-800'
+                  }`}>
+                    {latestRecord.status === 'paid' ? 'Paid' :
+                     latestRecord.status === 'processed' ? 'Processed' : 'Draft'}
                   </div>
                 </div>
-                {record.paymentDate && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Paid on {formatDate(record.paymentDate)}
-                  </p>
+                
+                <div className="border-t pt-4">
+                  <div className="grid grid-cols-2 gap-y-2">
+                    <div className="text-sm text-muted-foreground">Base Salary</div>
+                    <div className="text-sm font-medium text-right">{formatCurrency(latestRecord.baseSalary)}</div>
+                    
+                    <div className="text-sm text-muted-foreground">Overtime Pay</div>
+                    <div className="text-sm font-medium text-right">{formatCurrency(latestRecord.overtimePay)}</div>
+                    
+                    <div className="text-sm text-muted-foreground">Bonus</div>
+                    <div className="text-sm font-medium text-right">{formatCurrency(latestRecord.bonus)}</div>
+                    
+                    <div className="text-sm text-muted-foreground">Deductions</div>
+                    <div className="text-sm font-medium text-right text-red-500">
+                      -{formatCurrency(latestRecord.deductions)}
+                    </div>
+                    
+                    <div className="text-sm font-medium pt-2 border-t mt-2">Net Salary</div>
+                    <div className="text-sm font-bold pt-2 border-t mt-2 text-right">
+                      {formatCurrency(latestRecord.netSalary)}
+                    </div>
+                  </div>
+                </div>
+                
+                {latestRecord.status === 'paid' && latestRecord.paymentDate && (
+                  <div className="flex items-center text-xs text-muted-foreground mt-4">
+                    <Clock className="h-3 w-3 mr-1" />
+                    <span>Paid on {format(new Date(latestRecord.paymentDate), 'PPP')}</span>
+                  </div>
                 )}
               </div>
-            ))}
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No payroll data available</p>
+              </div>
+            )}
+          </TabsContent>
+          
+          <TabsContent value="history">
+            {payrollRecords.length > 0 ? (
+              <div className="space-y-4">
+                {payrollRecords
+                  .sort((a, b) => {
+                    const dateA = new Date(`${a.month} 1, ${a.year}`);
+                    const dateB = new Date(`${b.month} 1, ${b.year}`);
+                    return dateB.getTime() - dateA.getTime();
+                  })
+                  .map((record) => (
+                    <div key={record.id} className="flex justify-between items-center pb-3 border-b">
+                      <div>
+                        <p className="font-medium">{formatMonth(record.month, record.year)}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {record.status === 'paid' ? 'Paid' :
+                           record.status === 'processed' ? 'Processed' : 'Draft'}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium">{formatCurrency(record.netSalary)}</p>
+                        {record.paymentDate && (
+                          <p className="text-xs text-muted-foreground">
+                            {format(new Date(record.paymentDate), 'PPP')}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">No payment history available</p>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PayrollSummarySkeleton() {
+  return (
+    <Card>
+      <CardHeader>
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-4 w-64" />
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <div className="space-y-2">
+            <div className="flex justify-between">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-6 w-20" />
+            </div>
+            <div className="space-y-3 pt-4">
+              <div className="flex justify-between">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+              <div className="flex justify-between">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+              <div className="flex justify-between">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+              <div className="flex justify-between">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-16" />
+              </div>
+            </div>
           </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );
