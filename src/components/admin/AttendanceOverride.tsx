@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { User } from "@/services/api";
+import { User } from "@/models/types";
 import { UserCog } from "lucide-react";
 
 interface AttendanceOverrideProps {
