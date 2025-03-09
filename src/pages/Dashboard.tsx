@@ -106,15 +106,15 @@ export default function Dashboard() {
   
   return (
     <Layout>
-      <div className="container py-6 mb-24">
-        <div className="mb-6">
-          <h1 className="text-3xl font-bold tracking-tight mb-1">Welcome, {user.name}</h1>
+      <div className="container pt-6 pb-32">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Welcome, {user.name}</h1>
           <p className="text-muted-foreground">{new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</p>
         </div>
         
-        <Tabs defaultValue="attendance" className="space-y-6">
+        <Tabs defaultValue="attendance" className="space-y-8">
           <div className="tabs-container overflow-x-auto pb-2">
-            <TabsList className="mb-2 flex flex-nowrap min-w-max">
+            <TabsList className="mb-4 flex flex-nowrap min-w-max">
               <TabsTrigger value="attendance">Attendance</TabsTrigger>
               <TabsTrigger value="team">Team</TabsTrigger>
               <TabsTrigger value="tasks">Tasks</TabsTrigger>
