@@ -1,12 +1,18 @@
 
 export interface User {
   id: number;
+  employeeId: string;
   name: string;
   email: string;
   password?: string;
   role: "admin" | "employee";
   department: string;
+  designation?: string;
+  status?: "available" | "busy" | "away" | "offline";
+  address?: string;
+  phone?: string;
   avatarUrl?: string;
+  organizationLogo?: string;
 }
 
 export interface AttendanceRecord {
@@ -59,6 +65,7 @@ export interface EmployeeRegistration {
   email: string;
   password: string;
   department: string;
+  designation: string;
   role: "admin" | "employee";
   avatarUrl?: string;
 }
@@ -67,4 +74,12 @@ export interface RegistrationCode {
   code: string;
   expiryDate: Date;
   isUsed: boolean;
+}
+
+export interface DatabaseConfig {
+  host: string;
+  port: number;
+  database: string;
+  username: string;
+  password: string;
 }

@@ -3,11 +3,11 @@ import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { apiService } from "@/services/api";
 import { toast } from "sonner";
-import { format, addDays } from "date-fns";
+import { format, addDays, isBefore, startOfDay } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Clock } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -21,12 +21,15 @@ interface LeaveRequestFormProps {
 export default function LeaveRequestForm({ onSubmit }: LeaveRequestFormProps) {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const today = startOfDay(new Date());
+  const tomorrow = addDays(today, 1);
+  
   const [date, setDate] = useState<{
     from: Date;
     to: Date;
   }>({
-    from: new Date(),
-    to: addDays(new Date(), 1),
+    from: tomorrow,
+    to: addDays(tomorrow, 1),
   });
   const [reason, setReason] = useState("");
   const [leaveType, setLeaveType] = useState("annual");
@@ -49,8 +52,8 @@ export default function LeaveRequestForm({ onSubmit }: LeaveRequestFormProps) {
       
       toast.success("Leave request submitted successfully");
       setDate({
-        from: new Date(),
-        to: addDays(new Date(), 1),
+        from: tomorrow,
+        to: addDays(tomorrow, 1),
       });
       setReason("");
       setLeaveType("annual");
@@ -61,6 +64,9 @@ export default function LeaveRequestForm({ onSubmit }: LeaveRequestFormProps) {
       setIsSubmitting(false);
     }
   };
+
+  // Disable past dates
+  const disabledDays = { before: today };
   
   return (
     <Card>
@@ -120,14 +126,26 @@ export default function LeaveRequestForm({ onSubmit }: LeaveRequestFormProps) {
                     defaultMonth={date.from}
                     selected={{ from: date.from, to: date.to }}
                     onSelect={(range) => {
-                      if (range?.from && range?.to) {
-                        setDate({ from: range.from, to: range.to });
+                      if (range?.from) {
+                        // Ensure we don't select dates in the past
+                        const newFrom = isBefore(range.from, today) ? tomorrow : range.from;
+                        const newTo = range.to || addDays(newFrom, 1);
+                        setDate({ 
+                          from: newFrom, 
+                          to: isBefore(newTo, newFrom) ? addDays(newFrom, 1) : newTo 
+                        });
                       }
                     }}
+                    disabled={disabledDays}
                     numberOfMonths={2}
+                    className="pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
+              <div className="flex items-center text-xs text-muted-foreground">
+                <Clock className="h-3 w-3 mr-1" />
+                <span>Leave duration: {Math.max(1, Math.round((date.to.getTime() - date.from.getTime()) / (1000 * 60 * 60 * 24))) + 1} day(s)</span>
+              </div>
             </div>
           </div>
           

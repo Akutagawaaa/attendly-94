@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useNavigate, Link } from "react-router-dom";
 import { apiService } from "@/services/api";
 import { toast } from "sonner";
+import { UserPlus, Building, Briefcase, Mail, Lock, Hash } from "lucide-react";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -16,13 +17,14 @@ export default function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [department, setDepartment] = useState("");
+  const [designation, setDesignation] = useState("");
   const [registrationCode, setRegistrationCode] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name || !email || !password || !department || !registrationCode) {
+    if (!name || !email || !password || !department || !designation || !registrationCode) {
       toast.error("Please fill in all fields");
       return;
     }
@@ -49,6 +51,7 @@ export default function Register() {
         email,
         password,
         department,
+        designation,
         role: "employee", // Default role for new employees
       });
       
@@ -75,72 +78,120 @@ export default function Register() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
-              <Input 
-                id="name" 
-                placeholder="John Doe" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-              />
+              <div className="relative">
+                <UserPlus className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  id="name" 
+                  placeholder="John Doe" 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  className="pl-10"
+                />
+              </div>
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input 
-                id="email" 
-                type="email" 
-                placeholder="john@example.com" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-              />
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  id="email" 
+                  type="email" 
+                  placeholder="john@example.com" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  className="pl-10"
+                />
+              </div>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input 
-                  id="password" 
-                  type="password" 
-                  value={password} 
-                  onChange={(e) => setPassword(e.target.value)} 
-                />
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    id="password" 
+                    type="password" 
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)} 
+                    className="pl-10"
+                  />
+                </div>
               </div>
               
               <div className="space-y-2">
                 <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <Input 
-                  id="confirmPassword" 
-                  type="password" 
-                  value={confirmPassword} 
-                  onChange={(e) => setConfirmPassword(e.target.value)} 
-                />
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    id="confirmPassword" 
+                    type="password" 
+                    value={confirmPassword} 
+                    onChange={(e) => setConfirmPassword(e.target.value)} 
+                    className="pl-10"
+                  />
+                </div>
               </div>
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="department">Department</Label>
-              <Select value={department} onValueChange={setDepartment}>
-                <SelectTrigger id="department">
-                  <SelectValue placeholder="Select department" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Engineering">Engineering</SelectItem>
-                  <SelectItem value="Design">Design</SelectItem>
-                  <SelectItem value="Marketing">Marketing</SelectItem>
-                  <SelectItem value="HR">HR</SelectItem>
-                  <SelectItem value="Finance">Finance</SelectItem>
-                  <SelectItem value="Operations">Operations</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="relative">
+                <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Select value={department} onValueChange={setDepartment}>
+                  <SelectTrigger id="department" className="pl-10">
+                    <SelectValue placeholder="Select department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Engineering">Engineering</SelectItem>
+                    <SelectItem value="Design">Design</SelectItem>
+                    <SelectItem value="Marketing">Marketing</SelectItem>
+                    <SelectItem value="HR">HR</SelectItem>
+                    <SelectItem value="Finance">Finance</SelectItem>
+                    <SelectItem value="Operations">Operations</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="designation">Designation</Label>
+              <div className="relative">
+                <Briefcase className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Select value={designation} onValueChange={setDesignation}>
+                  <SelectTrigger id="designation" className="pl-10">
+                    <SelectValue placeholder="Select designation" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Software Engineer">Software Engineer</SelectItem>
+                    <SelectItem value="UI/UX Designer">UI/UX Designer</SelectItem>
+                    <SelectItem value="Product Manager">Product Manager</SelectItem>
+                    <SelectItem value="HR Specialist">HR Specialist</SelectItem>
+                    <SelectItem value="Accountant">Accountant</SelectItem>
+                    <SelectItem value="Sales Executive">Sales Executive</SelectItem>
+                    <SelectItem value="Marketing Specialist">Marketing Specialist</SelectItem>
+                    <SelectItem value="Team Lead">Team Lead</SelectItem>
+                    <SelectItem value="Manager">Manager</SelectItem>
+                    <SelectItem value="Director">Director</SelectItem>
+                    <SelectItem value="Intern">Intern</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="registrationCode">Registration Code</Label>
-              <Input 
-                id="registrationCode" 
-                placeholder="Enter registration code provided by admin" 
-                value={registrationCode} 
-                onChange={(e) => setRegistrationCode(e.target.value)} 
-              />
+              <div className="relative">
+                <Hash className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  id="registrationCode" 
+                  placeholder="Enter registration code provided by admin" 
+                  value={registrationCode} 
+                  onChange={(e) => setRegistrationCode(e.target.value)} 
+                  className="pl-10"
+                />
+              </div>
               <p className="text-xs text-muted-foreground">
                 You must have a valid registration code provided by your administrator
               </p>
