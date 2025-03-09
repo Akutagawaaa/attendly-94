@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatDate } from "@/lib/utils";
 import { AttendanceRecord } from "@/models/types";
@@ -13,7 +14,7 @@ interface AttendanceStatsProps {
 export default function AttendanceStats({ employees, attendanceRecords }: AttendanceStatsProps) {
   // Calculate today's date
   const today = new Date();
-  const formattedToday = formatDate(today, "long");
+  const formattedToday = formatDate(today);
 
   // Get today's records
   const todayRecords = attendanceRecords.filter(
