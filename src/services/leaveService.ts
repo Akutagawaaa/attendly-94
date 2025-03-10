@@ -18,9 +18,9 @@ export const leaveService = {
         employeeId: record.user_id,
         startDate: record.start_date,
         endDate: record.end_date,
-        reason: record.reason || "",
-        status: record.status,
-        type: record.type,
+        reason: record.description || "",
+        status: record.status as "pending" | "approved" | "rejected",
+        type: record.leave_type,
         createdAt: record.created_at,
       }));
     } catch (error) {
@@ -48,9 +48,9 @@ export const leaveService = {
         employeeId: record.user_id,
         startDate: record.start_date,
         endDate: record.end_date,
-        reason: record.reason || "",
-        status: record.status,
-        type: record.type,
+        reason: record.description || "",
+        status: record.status as "pending" | "approved" | "rejected",
+        type: record.leave_type,
         createdAt: record.created_at,
       }));
     } catch (error) {
@@ -71,8 +71,8 @@ export const leaveService = {
           user_id: employeeId,
           start_date: request.startDate,
           end_date: request.endDate,
-          reason: request.reason,
-          type: "annual", // Default type
+          description: request.reason,
+          leave_type: "annual", // Default type
           status: "pending"
         }])
         .select()
@@ -86,9 +86,9 @@ export const leaveService = {
         employeeId: data.user_id,
         startDate: data.start_date,
         endDate: data.end_date,
-        reason: data.reason || "",
-        status: data.status,
-        type: data.type,
+        reason: data.description || "",
+        status: data.status as "pending" | "approved" | "rejected",
+        type: data.leave_type,
         createdAt: data.created_at,
       };
     } catch (error) {
@@ -132,9 +132,9 @@ export const leaveService = {
         employeeId: data.user_id,
         startDate: data.start_date,
         endDate: data.end_date,
-        reason: data.reason || "",
-        status: data.status,
-        type: data.type,
+        reason: data.description || "",
+        status: data.status as "pending" | "approved" | "rejected",
+        type: data.leave_type,
         createdAt: data.created_at,
       };
     } catch (error) {

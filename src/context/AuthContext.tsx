@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { User } from "@/models/types";
@@ -40,20 +41,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
-          const { data: profile } = await supabase
-            .from('profiles')
+          // Try to get user from the users table instead of profiles
+          const { data: userData } = await supabase
+            .from('users')
             .select('*')
-            .eq('id', session.user.id)
+            .eq('id', parseInt(session.user.id))
             .single();
           
-          if (profile) {
+          if (userData) {
             const supabaseUser: User = {
-              id: parseInt(profile.id, 10) || Math.floor(Math.random() * 1000) + 10,
-              employeeId: profile.id.substring(0, 8),
-              name: profile.name,
-              email: profile.email,
-              role: profile.role || "employee",
-              department: profile.department || "General",
+              id: userData.id,
+              employeeId: `AT-${new Date().getFullYear()}-${userData.id}`,
+              name: userData.name,
+              email: userData.email,
+              role: userData.role || "employee",
+              department: userData.department || "General",
               status: "available"
             };
             setUser(supabaseUser);
@@ -86,20 +88,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
         try {
-          const { data: profile } = await supabase
-            .from('profiles')
+          // Try to get user from the users table instead of profiles
+          const { data: userData } = await supabase
+            .from('users')
             .select('*')
-            .eq('id', session.user.id)
+            .eq('id', parseInt(session.user.id))
             .single();
           
-          if (profile) {
+          if (userData) {
             const supabaseUser: User = {
-              id: parseInt(data.user.id, 10) || Math.floor(Math.random() * 1000) + 10,
-              employeeId: profile.id.substring(0, 8),
-              name: profile.name,
-              email: profile.email,
-              role: profile.role || "employee",
-              department: profile.department || "General",
+              id: userData.id,
+              employeeId: `AT-${new Date().getFullYear()}-${userData.id}`,
+              name: userData.name,
+              email: userData.email,
+              role: userData.role || "employee",
+              department: userData.department || "General",
               status: "available"
             };
             setUser(supabaseUser);
