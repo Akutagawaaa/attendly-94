@@ -9,7 +9,363 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      activity_log: {
+        Row: {
+          activity: string
+          id: number
+          timestamp: string | null
+          user_id: number | null
+        }
+        Insert: {
+          activity: string
+          id?: number
+          timestamp?: string | null
+          user_id?: number | null
+        }
+        Update: {
+          activity?: string
+          id?: number
+          timestamp?: string | null
+          user_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_log_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      analytics: {
+        Row: {
+          attendance_pattern: Json | null
+          attendance_rate: number | null
+          avg_hours_per_day: number | null
+          check_in_times: Json | null
+          id: number
+          total_overtime_hours: number | null
+          updated_at: string | null
+          user_id: number | null
+        }
+        Insert: {
+          attendance_pattern?: Json | null
+          attendance_rate?: number | null
+          avg_hours_per_day?: number | null
+          check_in_times?: Json | null
+          id?: number
+          total_overtime_hours?: number | null
+          updated_at?: string | null
+          user_id?: number | null
+        }
+        Update: {
+          attendance_pattern?: Json | null
+          attendance_rate?: number | null
+          avg_hours_per_day?: number | null
+          check_in_times?: Json | null
+          id?: number
+          total_overtime_hours?: number | null
+          updated_at?: string | null
+          user_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "analytics_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance: {
+        Row: {
+          check_in: string | null
+          check_out: string | null
+          created_at: string | null
+          id: number
+          total_hours: unknown | null
+          user_id: number | null
+          weekly_goal: number | null
+        }
+        Insert: {
+          check_in?: string | null
+          check_out?: string | null
+          created_at?: string | null
+          id?: number
+          total_hours?: unknown | null
+          user_id?: number | null
+          weekly_goal?: number | null
+        }
+        Update: {
+          check_in?: string | null
+          check_out?: string | null
+          created_at?: string | null
+          id?: number
+          total_hours?: unknown | null
+          user_id?: number | null
+          weekly_goal?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leave_requests: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          end_date: string
+          id: number
+          leave_type: string
+          start_date: string
+          status: string | null
+          user_id: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          end_date: string
+          id?: number
+          leave_type: string
+          start_date: string
+          status?: string | null
+          user_id?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          end_date?: string
+          id?: number
+          leave_type?: string
+          start_date?: string
+          status?: string | null
+          user_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_requests_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: number
+          message: string
+          read: boolean | null
+          type: string
+          user_id: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          message: string
+          read?: boolean | null
+          type: string
+          user_id?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          message?: string
+          read?: boolean | null
+          type?: string
+          user_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll: {
+        Row: {
+          created_at: string | null
+          id: number
+          overtime_hours: number | null
+          overtime_reason: string | null
+          payslip_link: string | null
+          salary: number
+          user_id: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          overtime_hours?: number | null
+          overtime_reason?: string | null
+          payslip_link?: string | null
+          salary: number
+          user_id?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          overtime_hours?: number | null
+          overtime_reason?: string | null
+          payslip_link?: string | null
+          salary?: number
+          user_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule: {
+        Row: {
+          created_at: string | null
+          event_date: string
+          event_name: string
+          event_type: string | null
+          id: number
+          user_id: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          event_date: string
+          event_name: string
+          event_type?: string | null
+          id?: number
+          user_id?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          event_date?: string
+          event_name?: string
+          event_type?: string | null
+          id?: number
+          user_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tasks: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          estimated_time: number | null
+          id: number
+          status: string | null
+          title: string
+          user_id: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          estimated_time?: number | null
+          id?: number
+          status?: string | null
+          title: string
+          user_id?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          estimated_time?: number | null
+          id?: number
+          status?: string | null
+          title?: string
+          user_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_status: {
+        Row: {
+          id: number
+          last_updated: string | null
+          status: string
+          user_id: number | null
+        }
+        Insert: {
+          id?: number
+          last_updated?: string | null
+          status: string
+          user_id?: number | null
+        }
+        Update: {
+          id?: number
+          last_updated?: string | null
+          status?: string
+          user_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_status_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      users: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          email: string
+          id: number
+          name: string
+          password_hash: string
+          role: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          email: string
+          id?: number
+          name: string
+          password_hash: string
+          role: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          email?: string
+          id?: number
+          name?: string
+          password_hash?: string
+          role?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

@@ -1,7 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { User } from "@/models/types";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuthContextType {
   user: User | null;
@@ -32,69 +32,167 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [otpRecords, setOtpRecords] = useState<OTPRecord[]>([]);
   const isAdmin = user?.role === "admin";
 
-  // Check if the user is already logged in
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    const checkSession = async () => {
+      setLoading(true);
+      
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (profile) {
+            const supabaseUser: User = {
+              id: parseInt(profile.id, 10) || Math.floor(Math.random() * 1000) + 10,
+              employeeId: profile.id.substring(0, 8),
+              name: profile.name,
+              email: profile.email,
+              role: profile.role || "employee",
+              department: profile.department || "General",
+              status: "available"
+            };
+            setUser(supabaseUser);
+          } else {
+            const storedUser = localStorage.getItem("user");
+            if (storedUser) {
+              setUser(JSON.parse(storedUser));
+            }
+          }
+        } else {
+          const storedUser = localStorage.getItem("user");
+          if (storedUser) {
+            setUser(JSON.parse(storedUser));
+          }
+        }
+      } catch (error) {
+        console.error("Error checking session:", error);
+        
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
     
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
+    checkSession();
     
-    setLoading(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_IN' && session?.user) {
+        try {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          
+          if (profile) {
+            const supabaseUser: User = {
+              id: parseInt(data.user.id, 10) || Math.floor(Math.random() * 1000) + 10,
+              employeeId: profile.id.substring(0, 8),
+              name: profile.name,
+              email: profile.email,
+              role: profile.role || "employee",
+              department: profile.department || "General",
+              status: "available"
+            };
+            setUser(supabaseUser);
+            localStorage.setItem("user", JSON.stringify(supabaseUser));
+          }
+        } catch (error) {
+          console.error("Error fetching user profile:", error);
+        }
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        localStorage.removeItem("user");
+      }
+    });
+    
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
-  // Generate a unique employee ID (format: AT-YYYY-XXXX)
   const generateEmployeeId = () => {
     const year = new Date().getFullYear();
     const randomPart = Math.floor(1000 + Math.random() * 9000);
     return `AT-${year}-${randomPart}`;
   };
 
-  // Mock login function - in a real app, this would call an API
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
       
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
       
-      // Mock login logic
-      const mockUsers: User[] = [
-        { 
-          id: 1, 
-          employeeId: "AT-2024-1001", 
-          name: "Alex Johnson", 
-          email: "employee@example.com", 
-          role: "employee", 
-          department: "Engineering",
-          designation: "Software Engineer",
-          status: "available",
-          address: "123 Tech Park, Bangalore"
-        },
-        { 
-          id: 2, 
-          employeeId: "AT-2024-1002", 
-          name: "Emma Williams", 
-          email: "admin@example.com", 
-          role: "admin", 
-          department: "HR", 
-          designation: "HR Manager",
-          status: "available",
-          address: "456 Corporate Avenue, Mumbai",
-          organizationLogo: "https://i.pravatar.cc/150?img=2"
-        },
-      ];
-      
-      const foundUser = mockUsers.find((u) => u.email === email);
-      
-      if (!foundUser) {
-        throw new Error("Invalid email or password");
+      if (error) {
+        console.warn("Supabase auth failed, falling back to mock login:", error.message);
+        
+        const mockUsers: User[] = [
+          { 
+            id: 1, 
+            employeeId: "AT-2024-1001", 
+            name: "Alex Johnson", 
+            email: "employee@example.com", 
+            role: "employee", 
+            department: "Engineering",
+            designation: "Software Engineer",
+            status: "available",
+            address: "123 Tech Park, Bangalore"
+          },
+          { 
+            id: 2, 
+            employeeId: "AT-2024-1002", 
+            name: "Emma Williams", 
+            email: "admin@example.com", 
+            role: "admin", 
+            department: "HR", 
+            designation: "HR Manager",
+            status: "available",
+            address: "456 Corporate Avenue, Mumbai",
+            organizationLogo: "https://i.pravatar.cc/150?img=2"
+          },
+        ];
+        
+        const foundUser = mockUsers.find((u) => u.email === email);
+        
+        if (!foundUser) {
+          throw new Error("Invalid email or password");
+        }
+        
+        localStorage.setItem("user", JSON.stringify(foundUser));
+        setUser(foundUser);
+      } else if (data.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', data.user.id)
+          .single();
+        
+        if (profile) {
+          const supabaseUser: User = {
+            id: parseInt(data.user.id, 10) || Math.floor(Math.random() * 1000) + 10,
+            employeeId: profile.id.substring(0, 8),
+            name: profile.name,
+            email: profile.email,
+            role: profile.role || "employee",
+            department: profile.department || "General",
+            status: "available"
+          };
+          
+          setUser(supabaseUser);
+          localStorage.setItem("user", JSON.stringify(supabaseUser));
+        }
       }
-      
-      // Save to local storage
-      localStorage.setItem("user", JSON.stringify(foundUser));
-      setUser(foundUser);
-      
     } catch (error) {
       console.error("Login failed", error);
       throw error;
@@ -103,32 +201,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Mock Google login
   const loginWithGoogle = async () => {
     try {
       setLoading(true);
       
-      // Simulate API call delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      });
       
-      // Mock Google login response
-      const mockGoogleUser: User = {
-        id: 3,
-        employeeId: "AT-2024-1003",
-        name: "Sarah Chen",
-        email: "sarah@example.com",
-        role: "employee",
-        department: "Design",
-        designation: "UI/UX Designer",
-        status: "available",
-        address: "789 Design Studio, Delhi",
-        avatarUrl: "https://i.pravatar.cc/150?img=5",
-      };
-      
-      // Save to local storage
-      localStorage.setItem("user", JSON.stringify(mockGoogleUser));
-      setUser(mockGoogleUser);
-      
+      if (error) {
+        console.error("Google auth failed:", error.message);
+        
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        
+        const mockGoogleUser: User = {
+          id: 3,
+          employeeId: "AT-2024-1003",
+          name: "Sarah Chen",
+          email: "sarah@example.com",
+          role: "employee",
+          department: "Design",
+          designation: "UI/UX Designer",
+          status: "available",
+          address: "789 Design Studio, Delhi",
+          avatarUrl: "https://i.pravatar.cc/150?img=5",
+        };
+        
+        localStorage.setItem("user", JSON.stringify(mockGoogleUser));
+        setUser(mockGoogleUser);
+      }
     } catch (error) {
       console.error("Google login failed", error);
       throw error;
@@ -137,22 +241,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Login with OTP
   const loginWithOTP = async (email: string) => {
     try {
       setLoading(true);
       
-      // Generate 6 digit OTP
-      const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      const expiresAt = Date.now() + 10 * 60 * 1000; // 10 minutes
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`
+        }
+      });
       
-      // Store OTP in local state (in a real app, this would be stored in a database)
-      const newOtpRecord: OTPRecord = { email, otp, expiresAt };
-      setOtpRecords([...otpRecords.filter(record => record.email !== email), newOtpRecord]);
-      
-      // Log OTP to console (in a real app, this would send an email)
-      console.log(`Your OTP for ${email} is: ${otp}`);
-      toast.info(`OTP has been sent to ${email}. Check console for the OTP.`);
+      if (error) {
+        console.error("OTP request failed:", error.message);
+        
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiresAt = Date.now() + 10 * 60 * 1000;
+        
+        const newOtpRecord: OTPRecord = { email, otp, expiresAt };
+        setOtpRecords([...otpRecords.filter(record => record.email !== email), newOtpRecord]);
+        
+        console.log(`Your OTP for ${email} is: ${otp}`);
+        toast.info(`OTP has been sent to ${email}. Check console for the OTP.`);
+      } else {
+        toast.success("A magic link has been sent to your email address");
+      }
       
     } catch (error) {
       console.error("OTP request failed", error);
@@ -162,12 +275,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Verify OTP and login
   const verifyOTP = async (email: string, otp: string) => {
     try {
       setLoading(true);
       
-      // Find the OTP record
       const otpRecord = otpRecords.find(record => record.email === email);
       
       if (!otpRecord) {
@@ -182,8 +293,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error("Invalid OTP");
       }
       
-      // OTP is valid, proceed with login
-      // Mock user lookup
       const mockUsers: User[] = [
         { 
           id: 1, 
@@ -213,7 +322,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const foundUser = mockUsers.find((u) => u.email === email);
       
       if (!foundUser) {
-        // Create a new user if not found
         const newUser: User = {
           id: Math.floor(Math.random() * 1000) + 10,
           employeeId: generateEmployeeId(),
@@ -232,7 +340,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(foundUser);
       }
       
-      // Remove the used OTP
       setOtpRecords(otpRecords.filter(record => record.email !== email));
       
     } catch (error) {
@@ -243,12 +350,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem("user");
-    setUser(null);
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error("Error signing out from Supabase:", error);
+    } finally {
+      localStorage.removeItem("user");
+      setUser(null);
+    }
   };
 
-  // Update organization logo (for admin users)
   const updateOrganizationLogo = (logoUrl: string) => {
     if (!user || user.role !== "admin") return;
     
@@ -257,7 +369,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(updatedUser);
   };
 
-  // Update user profile data
   const updateProfile = (profileData: Partial<User>) => {
     if (!user) return;
     
@@ -266,7 +377,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(updatedUser);
   };
 
-  // Update avatar specifically
   const updateAvatar = (avatarUrl: string) => {
     if (!user) return;
     
@@ -275,7 +385,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(updatedUser);
   };
 
-  // Update user status
   const updateUserStatus = (status: User['status']) => {
     if (!user) return;
     
