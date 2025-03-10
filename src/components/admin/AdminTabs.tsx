@@ -38,15 +38,17 @@ export default function AdminTabs({
 }: AdminTabsProps) {
   return (
     <Tabs defaultValue="employees" className="space-y-4">
-      <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 w-full">
-        <TabsTrigger value="employees">Employees</TabsTrigger>
-        <TabsTrigger value="payroll">Payroll</TabsTrigger>
-        <TabsTrigger value="overtime">Overtime</TabsTrigger>
-        <TabsTrigger value="leave">Leave Requests</TabsTrigger>
-        <TabsTrigger value="reports">Reports</TabsTrigger>
-        <TabsTrigger value="attendance-override">Attendance</TabsTrigger>
-        <TabsTrigger value="registration">Registration</TabsTrigger>
-      </TabsList>
+      <div className="overflow-x-auto">
+        <TabsList className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 w-full min-w-max">
+          <TabsTrigger value="employees">Employees</TabsTrigger>
+          <TabsTrigger value="payroll">Payroll</TabsTrigger>
+          <TabsTrigger value="overtime">Overtime</TabsTrigger>
+          <TabsTrigger value="leave">Leave Requests</TabsTrigger>
+          <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="attendance-override">Attendance</TabsTrigger>
+          <TabsTrigger value="registration">Registration</TabsTrigger>
+        </TabsList>
+      </div>
       
       <TabsContent value="employees" className="space-y-4">
         <EmployeeTable
