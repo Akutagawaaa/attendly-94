@@ -16,7 +16,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { ButtonCustom } from "@/components/ui/button-custom";
+import { Button } from "@/components/ui/button";
 
 export default function Header() {
   const { user, logout, isAdmin, updateOrganizationLogo } = useAuth();
@@ -40,7 +40,7 @@ export default function Header() {
   };
   
   return (
-    <header className="border-b backdrop-blur-md bg-background/80 fixed top-0 w-full z-10 transition-all duration-200">
+    <header className="border-b backdrop-blur-md bg-background/80 fixed top-0 w-full z-50 transition-all duration-200">
       <div className="container flex h-16 items-center justify-between px-4 sm:px-8 mx-auto">
         {/* Logo and Title */}
         <div className="flex items-center gap-2">
@@ -175,16 +175,16 @@ export default function Header() {
             )}
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
-            <ButtonCustom
+            <Button
               type="button" 
               variant="outline"
               onClick={() => setLogoDialogOpen(false)}
             >
               Cancel
-            </ButtonCustom>
-            <ButtonCustom type="button" onClick={handleLogoUpdate}>
+            </Button>
+            <Button type="button" onClick={handleLogoUpdate}>
               Update Logo
-            </ButtonCustom>
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

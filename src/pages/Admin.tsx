@@ -32,6 +32,7 @@ export default function Admin() {
     
     if (!isAdmin) {
       navigate("/dashboard");
+      return;
     }
     
     fetchData();

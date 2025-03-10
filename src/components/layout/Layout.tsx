@@ -16,16 +16,7 @@ export default function Layout({ children }: LayoutProps) {
       <Header />
       
       <div className="flex-1 bg-gray-50 relative overflow-x-hidden">
-        {/* Organization logo watermark for admin users */}
-        {user?.role === "admin" && user?.organizationLogo && (
-          <div className="fixed right-6 bottom-28 opacity-30 pointer-events-none">
-            <img 
-              src={user.organizationLogo} 
-              alt="Organization logo" 
-              className="w-24 h-24 object-contain"
-            />
-          </div>
-        )}
+        {/* Removed organization logo watermark */}
         
         {/* Added pt-20 to create space below the header */}
         <main className="relative z-10 pb-28 pt-20">
