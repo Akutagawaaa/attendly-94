@@ -27,7 +27,8 @@ export default function Layout({ children }: LayoutProps) {
           </div>
         )}
         
-        <main className="relative z-10 pb-28">
+        {/* Added pt-20 to create space below the header */}
+        <main className="relative z-10 pb-28 pt-20">
           {children}
         </main>
       </div>
