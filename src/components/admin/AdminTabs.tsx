@@ -8,6 +8,8 @@ import LeaveManagement from "@/components/admin/LeaveManagement";
 import ReportsPanel from "@/components/admin/ReportsPanel";
 import AttendanceOverride from "@/components/admin/AttendanceOverride";
 import RegistrationPanel from "@/components/admin/RegistrationPanel";
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AdminTabsProps {
   employees: User[];
@@ -36,6 +38,38 @@ export default function AdminTabs({
   onOpenOverrideModal,
   refreshAttendanceData
 }: AdminTabsProps) {
+  // Set up real-time subscriptions for admin data
+  useEffect(() => {
+    // Subscribe to attendance changes for all users
+    const attendanceChannel = supabase
+      .channel('public:attendance:admin')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'attendance' },
+        (payload) => {
+          console.log('Admin real-time attendance update:', payload);
+          refreshAttendanceData();
+        }
+      )
+      .subscribe();
+      
+    // Subscribe to leave request changes for all users
+    const leaveChannel = supabase
+      .channel('public:leave_requests:admin')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'leave_requests' },
+        (payload) => {
+          console.log('Admin real-time leave request update:', payload);
+          onPayrollUpdate();
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(attendanceChannel);
+      supabase.removeChannel(leaveChannel);
+    };
+  }, [refreshAttendanceData, onPayrollUpdate]);
+
   return (
     <Tabs defaultValue="employees" className="space-y-4">
       <div className="overflow-x-auto">

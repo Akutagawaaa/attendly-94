@@ -1,4 +1,3 @@
-
 import Layout from "@/components/layout/Layout";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
@@ -19,7 +18,7 @@ import AnalyticsDashboard from "@/components/dashboard/AnalyticsDashboard";
 import NotificationSystem from "@/components/dashboard/NotificationSystem";
 import TaskTracking from "@/components/dashboard/TaskTracking";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -63,6 +62,40 @@ export default function Dashboard() {
     };
     
     fetchData();
+  }, [user]);
+  
+  // Subscribe to real-time updates for attendance and leave requests
+  useEffect(() => {
+    if (!user) return;
+    
+    // Subscribe to attendance changes
+    const attendanceChannel = supabase
+      .channel('public:attendance')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'attendance', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          console.log('Real-time attendance update:', payload);
+          refreshData();
+        }
+      )
+      .subscribe();
+      
+    // Subscribe to leave request changes
+    const leaveChannel = supabase
+      .channel('public:leave_requests')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'leave_requests', filter: `user_id=eq.${user.id}` },
+        (payload) => {
+          console.log('Real-time leave request update:', payload);
+          refreshData();
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(attendanceChannel);
+      supabase.removeChannel(leaveChannel);
+    };
   }, [user]);
   
   // Check if user is checked in today
