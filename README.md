@@ -1,69 +1,161 @@
-# Welcome to your Lovable project
+# Attendly - Employee Management & HR Software
 
-## Project info
 
-**URL**: https://lovable.dev/projects/ec5b09fe-163b-40ba-92b0-12bbd3b8d38f
 
-## How can I edit this code?
+## 🚀 Overview
 
-There are several ways of editing your application.
+**Attendly** is a powerful **Employee Management & HR Software** designed to streamline **attendance tracking, task management, payroll processing, and analytics** in one place. It helps businesses manage employees effectively while providing a seamless user experience.
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/ec5b09fe-163b-40ba-92b0-12bbd3b8d38f) and start prompting.
+## 🎯 Features
 
-Changes made via Lovable will be committed automatically to this repo.
+✅ **Employee Dashboard** - Track attendance, check-ins, and real-time activities\
+✅ **Team Management** - View team status (Active/Offline), departments, and notifications\
+✅ **Task Management** - Assign & track tasks with descriptions and deadlines\
+✅ **Scheduling & Events** - Integrated calendar with personal & company-wide events\
+✅ **Analytics & Reports** - Graphical insights into attendance patterns, working hours, and more\
+✅ **Payroll Management** - Employee salary records & overtime tracking\
+✅ **Leave & Absence Management** - Apply for leaves with multiple leave types\
+✅ **Admin Panel** - Manage users, tasks, and system-wide notifications
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🛠 Tech Stack
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+| **Technology**           | **Usage**                      |
+| ------------------------ | ------------------------------ |
+| **Frontend**             | React + TypeScript             |
+| **Backend**              | Node.js + Express.js           |
+| **Database**             | PostgreSQL (AWS RDS)           |
+| **Authentication**       | Firebase Auth (Google Sign-in) |
+| **Hosting**              | Firebase Hosting / Vercel      |
+| **Email Notifications**  | SendGrid + Cloud Functions     |
+| **Logging & Monitoring** | Google Cloud Logging           |
 
-Follow these steps:
+---
+
+## 🎬 Demo & Screenshots
+
+
+![Screenshot (175)](https://github.com/user-attachments/assets/15d5049e-8b1d-499d-b73c-d5d0b51ceef1)
+
+---
+
+## 📌 Installation & Setup
+
+### 1️⃣ Clone the Repository
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+ git clone https://github.com/Akutagawaaa/attendly-94.git
+ cd Attendly
 ```
 
-**Edit a file directly in GitHub**
+### 2️⃣ Backend Setup
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```sh
+ cd backend
+ npm install
+ node server.js  # Starts the Node.js server
+```
 
-**Use GitHub Codespaces**
+### 3️⃣ Frontend Setup
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```sh
+ cd frontend
+ npm install
+ npm run dev  # Starts React development server
+```
 
-## What technologies are used for this project?
+---
 
-This project is built with .
+## 📂 Project Structure
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```plaintext
+Attendly/
+├── backend/          # Node.js & Express backend
+│   ├── db.js         # Database connection
+│   ├── routes/       # API Routes
+│   ├── server.js     # Main backend server
+│   └── .env          # Environment variables
+├── frontend/         # React + TypeScript frontend
+│   ├── src/
+│   │   ├── components/
+│   │   ├── pages/
+│   │   ├── styles/
+│   │   ├── App.tsx
+│   │   ├── index.tsx
+│   └── package.json
+└── README.md         # Project Documentation
+```
 
-## How can I deploy this project?
+---
 
-Simply open [Lovable](https://lovable.dev/projects/ec5b09fe-163b-40ba-92b0-12bbd3b8d38f) and click on Share -> Publish.
+## 🚦 API Endpoints
 
-## I want to use a custom domain - is that possible?
+### ✅ Authentication
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+```http
+POST /api/auth/login  → Logs in a user
+POST /api/auth/register  → Registers a new user
+```
+
+### ✅ Attendance
+
+```http
+POST /api/attendance  → Mark attendance
+GET /api/attendance   → Get all attendance records
+```
+
+### ✅ Tasks & Scheduling
+
+```http
+POST /api/tasks  → Create a new task
+GET /api/tasks   → Get all tasks assigned
+```
+
+More endpoints available in `/backend/routes/` 🚀
+
+---
+
+## 👥 User Roles
+
+🔹 **Employee** - Mark attendance, manage tasks, track payroll, request leaves\
+🔹 **Admin** - Manage employees, approve leaves, oversee payroll, and system notifications
+
+---
+
+## 🌐 Deployment
+
+✅ **Frontend** → Firebase Hosting
+✅ **Backend** → AWS EC2
+✅ **Database** → AWS RDS (PostgreSQL)
+
+---
+
+## 💡 Future Enhancements
+
+- 📌 **Mobile App (React Native)**
+- 📌 **Biometric & QR-based Check-ins**
+- 📌 **AI-powered Attendance Predictions**
+
+---
+
+## 💙 Contributing
+
+Want to improve Attendly? Feel free to fork, raise issues, and submit pull requests! 🚀
+
+```sh
+git clone https://github.com/Akutagawaaa/attendly-94.git
+```
+
+---
+
+## 📞 Contact & Support
+
+📧 **Email**: [sushant.shrivastava.2603@gmail.com](mailto\:sushant.shrivastava.2603@gmail.com)\
+
+---
+
+🚀 **Attendly** - Making Workforce Management Smarter! 🚀
+
