@@ -49,12 +49,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .single();
           
           if (userData) {
+            const userRole = userData.role === "admin" ? "admin" : "employee" as "admin" | "employee";
+            
             const supabaseUser: User = {
               id: userData.id,
               employeeId: `AT-${new Date().getFullYear()}-${userData.id}`,
               name: userData.name,
               email: userData.email,
-              role: userData.role || "employee",
+              role: userRole,
               department: userData.department || "General",
               status: "available"
             };
@@ -96,12 +98,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             .single();
           
           if (userData) {
+            const userRole = userData.role === "admin" ? "admin" : "employee" as "admin" | "employee";
+            
             const supabaseUser: User = {
               id: userData.id,
               employeeId: `AT-${new Date().getFullYear()}-${userData.id}`,
               name: userData.name,
               email: userData.email,
-              role: userData.role || "employee",
+              role: userRole,
               department: userData.department || "General",
               status: "available"
             };
@@ -175,20 +179,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem("user", JSON.stringify(foundUser));
         setUser(foundUser);
       } else if (data.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
+        // Use users table instead of profiles
+        const { data: userData } = await supabase
+          .from('users')
           .select('*')
-          .eq('id', data.user.id)
+          .eq('id', parseInt(data.user.id))
           .single();
         
-        if (profile) {
+        if (userData) {
+          const userRole = userData.role === "admin" ? "admin" : "employee" as "admin" | "employee";
+          
           const supabaseUser: User = {
             id: parseInt(data.user.id, 10) || Math.floor(Math.random() * 1000) + 10,
-            employeeId: profile.id.substring(0, 8),
-            name: profile.name,
-            email: profile.email,
-            role: profile.role || "employee",
-            department: profile.department || "General",
+            employeeId: generateEmployeeId(),
+            name: userData.name,
+            email: userData.email,
+            role: userRole,
+            department: userData.department || "General",
             status: "available"
           };
           

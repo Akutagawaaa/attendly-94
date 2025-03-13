@@ -67,14 +67,14 @@ export const leaveService = {
     try {
       const { data, error } = await supabase
         .from("leave_requests")
-        .insert([{
+        .insert({
           user_id: employeeId,
           start_date: request.startDate,
           end_date: request.endDate,
           description: request.reason,
           leave_type: "annual", // Default type
           status: "pending"
-        }])
+        })
         .select()
         .single();
       
