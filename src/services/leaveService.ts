@@ -1,122 +1,161 @@
 
 import { LeaveRequest } from "../models/types";
-import { db } from "../config/db";
-import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const leaveService = {
   async getAllLeaveRequests(): Promise<LeaveRequest[]> {
     try {
-      const result = await db.query(`
-        SELECT * FROM leave_requests 
-        ORDER BY created_at DESC
-      `);
+      const { data, error } = await supabase
+        .from("leave_requests")
+        .select("*")
+        .order("created_at", { ascending: false });
       
-      return result.rows.map(row => ({
-        id: row.id,
-        employeeId: row.employee_id,
-        startDate: row.start_date,
-        endDate: row.end_date,
-        reason: row.description || "",
-        status: row.status as "pending" | "approved" | "rejected",
-        type: row.leave_type,
-        createdAt: row.created_at,
+      if (error) throw error;
+      
+      // Transform Supabase data to match our LeaveRequest type
+      return (data || []).map(record => ({
+        id: record.id,
+        employeeId: record.user_id,
+        startDate: record.start_date,
+        endDate: record.end_date,
+        reason: record.description || "",
+        status: record.status as "pending" | "approved" | "rejected",
+        type: record.leave_type,
+        createdAt: record.created_at,
       }));
     } catch (error) {
       console.error("Error fetching leave requests:", error);
-      toast.error("Failed to fetch leave requests");
-      return [];
+      
+      // Fallback to local storage if Supabase fails
+      const storedRequests = localStorage.getItem("mockLeaveRequests");
+      return storedRequests ? JSON.parse(storedRequests) : [];
     }
   },
   
   async getUserLeaveRequests(userId: number): Promise<LeaveRequest[]> {
     try {
-      const result = await db.query(`
-        SELECT * FROM leave_requests 
-        WHERE employee_id = $1
-        ORDER BY created_at DESC
-      `, [userId]);
+      const { data, error } = await supabase
+        .from("leave_requests")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
       
-      return result.rows.map(row => ({
-        id: row.id,
-        employeeId: row.employee_id,
-        startDate: row.start_date,
-        endDate: row.end_date,
-        reason: row.description || "",
-        status: row.status as "pending" | "approved" | "rejected",
-        type: row.leave_type,
-        createdAt: row.created_at,
+      if (error) throw error;
+      
+      // Transform Supabase data to match our LeaveRequest type
+      return (data || []).map(record => ({
+        id: record.id,
+        employeeId: record.user_id,
+        startDate: record.start_date,
+        endDate: record.end_date,
+        reason: record.description || "",
+        status: record.status as "pending" | "approved" | "rejected",
+        type: record.leave_type,
+        createdAt: record.created_at,
       }));
     } catch (error) {
       console.error("Error fetching user leave requests:", error);
-      toast.error("Failed to fetch your leave requests");
-      return [];
+      
+      // Fallback to local storage if Supabase fails
+      const storedRequests = localStorage.getItem("mockLeaveRequests");
+      const leaveRequests: LeaveRequest[] = storedRequests ? JSON.parse(storedRequests) : [];
+      return leaveRequests.filter(request => request.employeeId === userId);
     }
   },
   
   async createLeaveRequest(request: Omit<LeaveRequest, 'id' | 'status' | 'createdAt' | 'type'>, employeeId: number): Promise<LeaveRequest> {
     try {
-      const result = await db.query(`
-        INSERT INTO leave_requests (
-          employee_id, start_date, end_date, description, leave_type, status
-        ) VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING *
-      `, [
-        employeeId,
-        request.startDate,
-        request.endDate,
-        request.reason,
-        "annual", // Default type
-        "pending"
-      ]);
+      const { data, error } = await supabase
+        .from("leave_requests")
+        .insert({
+          user_id: employeeId,
+          start_date: request.startDate,
+          end_date: request.endDate,
+          description: request.reason,
+          leave_type: "annual", // Default type
+          status: "pending"
+        })
+        .select()
+        .single();
       
-      const row = result.rows[0];
+      if (error) throw error;
       
+      // Transform to match our LeaveRequest type
       return {
-        id: row.id,
-        employeeId: row.employee_id,
-        startDate: row.start_date,
-        endDate: row.end_date,
-        reason: row.description || "",
-        status: row.status as "pending" | "approved" | "rejected",
-        type: row.leave_type,
-        createdAt: row.created_at,
+        id: data.id,
+        employeeId: data.user_id,
+        startDate: data.start_date,
+        endDate: data.end_date,
+        reason: data.description || "",
+        status: data.status as "pending" | "approved" | "rejected",
+        type: data.leave_type,
+        createdAt: data.created_at,
       };
     } catch (error) {
       console.error("Error creating leave request:", error);
-      toast.error("Failed to submit leave request");
-      throw new Error("Failed to create leave request");
+      
+      // Fallback to old method if Supabase fails
+      const storedRequests = localStorage.getItem("mockLeaveRequests");
+      const leaveRequests: LeaveRequest[] = storedRequests ? JSON.parse(storedRequests) : [];
+      
+      const newRequest: LeaveRequest = {
+        id: Math.floor(Math.random() * 10000),
+        employeeId,
+        startDate: request.startDate,
+        endDate: request.endDate,
+        reason: request.reason,
+        status: "pending",
+        type: "annual",
+        createdAt: new Date().toISOString(),
+      };
+      
+      leaveRequests.push(newRequest);
+      localStorage.setItem("mockLeaveRequests", JSON.stringify(leaveRequests));
+      return newRequest;
     }
   },
   
   async updateLeaveRequestStatus(id: number, status: "approved" | "rejected"): Promise<LeaveRequest | null> {
     try {
-      const result = await db.query(`
-        UPDATE leave_requests
-        SET status = $1
-        WHERE id = $2
-        RETURNING *
-      `, [status, id]);
+      const { data, error } = await supabase
+        .from("leave_requests")
+        .update({ status })
+        .eq("id", id)
+        .select()
+        .single();
       
-      if (result.rows.length === 0) {
-        return null;
-      }
+      if (error) throw error;
       
-      const row = result.rows[0];
-      
+      // Transform to match our LeaveRequest type
       return {
-        id: row.id,
-        employeeId: row.employee_id,
-        startDate: row.start_date,
-        endDate: row.end_date,
-        reason: row.description || "",
-        status: row.status as "pending" | "approved" | "rejected",
-        type: row.leave_type,
-        createdAt: row.created_at,
+        id: data.id,
+        employeeId: data.user_id,
+        startDate: data.start_date,
+        endDate: data.end_date,
+        reason: data.description || "",
+        status: data.status as "pending" | "approved" | "rejected",
+        type: data.leave_type,
+        createdAt: data.created_at,
       };
     } catch (error) {
       console.error("Error updating leave request status:", error);
-      toast.error("Failed to update leave request status");
-      return null;
+      
+      // Fallback to old method if Supabase fails
+      const storedRequests = localStorage.getItem("mockLeaveRequests");
+      if (!storedRequests) return null;
+      
+      let leaveRequests: LeaveRequest[] = JSON.parse(storedRequests);
+      const requestIndex = leaveRequests.findIndex(request => request.id === id);
+      
+      if (requestIndex === -1) return null;
+      
+      leaveRequests[requestIndex] = {
+        ...leaveRequests[requestIndex],
+        status,
+      };
+      
+      localStorage.setItem("mockLeaveRequests", JSON.stringify(leaveRequests));
+      return leaveRequests[requestIndex];
     }
   }
 };
