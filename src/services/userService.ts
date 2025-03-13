@@ -10,6 +10,10 @@ const generateEmployeeId = () => {
 };
 
 export const userService = {
+  async login(email: string, password: string): Promise<User | null> {
+    return this.loginUser(email, password);
+  },
+  
   async loginUser(email: string, password: string): Promise<User | null> {
     try {
       // In a real implementation, this would verify credentials against the database
@@ -29,7 +33,7 @@ export const userService = {
         role: user.role,
         department: user.department,
         designation: user.designation || '',
-        status: user.status || 'online',
+        status: user.status || 'offline',
         avatarUrl: user.avatar_url || ''
       };
       
@@ -41,6 +45,40 @@ export const userService = {
       console.error("Login error:", error);
       return null;
     }
+  },
+  
+  async getUser(): Promise<User | null> {
+    return this.getCurrentUser();
+  },
+  
+  async getEmployeeById(id: number): Promise<User | null> {
+    try {
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const user = users.find((u: any) => u.id === id);
+      
+      if (!user) {
+        return null;
+      }
+      
+      return {
+        id: user.id,
+        employeeId: user.employee_id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        department: user.department,
+        designation: user.designation || '',
+        status: user.status || 'offline',
+        avatarUrl: user.avatar_url || ''
+      };
+    } catch (error) {
+      console.error("Error fetching employee:", error);
+      return null;
+    }
+  },
+  
+  async getAllEmployees(): Promise<User[]> {
+    return this.getAllUsers();
   },
   
   async registerEmployee(userData: {
@@ -79,7 +117,7 @@ export const userService = {
         role: userData.role,
         department: userData.department,
         designation: userData.designation,
-        status: 'offline',
+        status: 'offline' as 'offline', // Type assertion to fix type error
         created_at: new Date().toISOString()
       };
       
