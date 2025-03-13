@@ -21,11 +21,11 @@ export type {
 // Combine all services into a single API service for backward compatibility
 export const apiService = {
   // User Service
-  login: userService.login,
+  login: userService.loginUser,
   logout: userService.logout,
-  getUser: userService.getUser,
+  getUser: userService.getCurrentUser,
   getEmployeeById: userService.getEmployeeById,
-  getAllEmployees: userService.getAllEmployees,
+  getAllEmployees: userService.getAllUsers,
   registerEmployee: userService.registerEmployee,
   
   // Attendance Service
