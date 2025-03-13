@@ -1,196 +1,171 @@
 
-import { User, EmployeeRegistration } from "../models/types";
+import { User } from "../models/types";
 import { db } from "../config/db";
+import { supabase } from "../integrations/supabase/client";
 import { registrationService } from "./registrationService";
-import { toast } from "sonner";
+
+// Generate a unique employee ID
+const generateEmployeeId = () => {
+  return `EMP-${Date.now().toString().slice(-6)}`;
+};
 
 export const userService = {
-  async login(email: string, password: string): Promise<User | null> {
+  async loginUser(email: string, password: string): Promise<User | null> {
     try {
-      // In a real app, we would hash the password and compare hashes
-      const result = await db.query(
-        `SELECT * FROM users WHERE email = $1`,
-        [email]
-      );
+      // In a real implementation, this would verify credentials against the database
+      // For demonstration, we'll check localStorage
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const user = users.find((u: any) => u.email === email && u.password_hash === password);
       
-      if (result.rows.length === 0) {
+      if (!user) {
         return null;
       }
       
-      // Simple password check (in a real app, use bcrypt.compare)
-      const user = result.rows[0];
-      if (user.password_hash !== password) {
-        return null;
-      }
-      
-      return {
+      const loggedInUser: User = {
         id: user.id,
         employeeId: user.employee_id,
         name: user.name,
         email: user.email,
-        role: user.role as "admin" | "employee" | "hr" | "manager",
+        role: user.role,
         department: user.department,
-        designation: user.designation,
-        status: user.status as "available" | "busy" | "away" | "offline",
-        address: user.address,
-        phone: user.phone,
-        avatarUrl: user.avatar_url,
-        organizationLogo: user.organization_logo
+        designation: user.designation || '',
+        status: user.status || 'online',
+        avatarUrl: user.avatar_url || ''
       };
+      
+      // Store current user in localStorage for session management
+      localStorage.setItem('currentUser', JSON.stringify(loggedInUser));
+      
+      return loggedInUser;
     } catch (error) {
-      console.error("Error during login:", error);
+      console.error("Login error:", error);
       return null;
     }
   },
   
-  async logout(): Promise<void> {
-    // Nothing to do here with the database
-    return Promise.resolve();
-  },
-  
-  async getUser(id: number): Promise<User | null> {
+  async registerEmployee(userData: {
+    name: string;
+    email: string;
+    password: string;
+    department: string;
+    designation: string;
+    role: "admin" | "employee" | "hr" | "manager";
+  }, registrationCode: string): Promise<User | null> {
     try {
-      const result = await db.query(
-        `SELECT * FROM users WHERE id = $1`,
-        [id]
-      );
-      
-      if (result.rows.length === 0) {
-        return null;
+      // First validate the registration code
+      const isValidCode = await registrationService.validateRegistrationCode(registrationCode);
+      if (!isValidCode) {
+        throw new Error("Invalid registration code");
       }
       
-      const user = result.rows[0];
-      return {
-        id: user.id,
-        employeeId: user.employee_id,
-        name: user.name,
-        email: user.email,
-        role: user.role as "admin" | "employee" | "hr" | "manager",
-        department: user.department,
-        designation: user.designation,
-        status: user.status as "available" | "busy" | "away" | "offline",
-        address: user.address,
-        phone: user.phone,
-        avatarUrl: user.avatar_url,
-        organizationLogo: user.organization_logo
+      // Generate a unique employee ID
+      const employeeId = generateEmployeeId();
+      
+      // In a real implementation, this would store the user in the database
+      // For demonstration, we'll use localStorage
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      
+      // Check if email already exists
+      if (users.some((u: any) => u.email === userData.email)) {
+        throw new Error("Email already registered");
+      }
+      
+      const newUser = {
+        id: users.length + 1,
+        employee_id: employeeId,
+        name: userData.name,
+        email: userData.email,
+        password_hash: userData.password, // In a real app, this would be hashed
+        role: userData.role,
+        department: userData.department,
+        designation: userData.designation,
+        status: 'offline',
+        created_at: new Date().toISOString()
       };
+      
+      users.push(newUser);
+      localStorage.setItem('users', JSON.stringify(users));
+      
+      // Mark the registration code as used
+      await registrationService.markCodeAsUsed(registrationCode);
+      
+      // Return the created user
+      const createdUser: User = {
+        id: newUser.id,
+        employeeId: newUser.employee_id,
+        name: newUser.name,
+        email: newUser.email,
+        role: newUser.role,
+        department: newUser.department,
+        designation: newUser.designation || '',
+        status: newUser.status,
+        avatarUrl: ''
+      };
+      
+      return createdUser;
     } catch (error) {
-      console.error("Error fetching user:", error);
-      return null;
+      console.error("Registration error:", error);
+      throw error;
     }
   },
   
-  async getEmployeeById(id: number): Promise<User | null> {
-    return this.getUser(id);
-  },
-  
-  async getAllEmployees(): Promise<User[]> {
+  async getAllUsers(): Promise<User[]> {
     try {
-      const result = await db.query(
-        `SELECT * FROM users ORDER BY name`
-      );
+      // In a real implementation, this would query the database
+      // For demonstration, we'll use localStorage
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
       
-      return result.rows.map(user => ({
+      return users.map((user: any) => ({
         id: user.id,
         employeeId: user.employee_id,
         name: user.name,
         email: user.email,
-        role: user.role as "admin" | "employee" | "hr" | "manager",
+        role: user.role,
         department: user.department,
-        designation: user.designation,
-        status: user.status as "available" | "busy" | "away" | "offline",
-        address: user.address,
-        phone: user.phone,
-        avatarUrl: user.avatar_url,
-        organizationLogo: user.organization_logo
+        designation: user.designation || '',
+        status: user.status || 'offline',
+        avatarUrl: user.avatar_url || ''
       }));
     } catch (error) {
-      console.error("Error fetching all employees:", error);
+      console.error("Error fetching users:", error);
       return [];
     }
   },
   
-  async registerEmployee(data: EmployeeRegistration, registrationCode: string): Promise<User> {
+  async updateUserStatus(userId: number, status: 'online' | 'offline' | 'away'): Promise<boolean> {
     try {
-      // Validate registration code
-      const isValid = await registrationService.validateRegistrationCode(registrationCode);
-      if (!isValid) {
-        throw new Error("Invalid or expired registration code");
+      // In a real implementation, this would update the database
+      // For demonstration, we'll use localStorage
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      
+      const updatedUsers = users.map((user: any) => {
+        if (user.id === userId) {
+          return { ...user, status };
+        }
+        return user;
+      });
+      
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
+      
+      // Update current user if it's the logged-in user
+      const currentUser = JSON.parse(localStorage.getItem('currentUser') || 'null');
+      if (currentUser && currentUser.id === userId) {
+        localStorage.setItem('currentUser', JSON.stringify({ ...currentUser, status }));
       }
-      
-      // Check if email already exists
-      const emailCheck = await db.query(
-        `SELECT id FROM users WHERE email = $1`,
-        [data.email]
-      );
-      
-      if (emailCheck.rows.length > 0) {
-        throw new Error("Email already registered");
-      }
-      
-      // Generate employee ID
-      const year = new Date().getFullYear();
-      const countResult = await db.query('SELECT COUNT(*) FROM users');
-      const count = parseInt(countResult.rows[0].count);
-      const randomPart = 1000 + count;
-      const employeeId = `AT-${year}-${randomPart}`;
-      
-      // Insert new user
-      const result = await db.query(
-        `INSERT INTO users (
-          employee_id, name, email, password_hash, role, department, designation, avatar_url
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-        RETURNING *`,
-        [
-          employeeId,
-          data.name,
-          data.email,
-          data.password, // In a real app, this would be hashed
-          data.role,
-          data.department,
-          data.designation,
-          data.avatarUrl || null
-        ]
-      );
-      
-      // Mark registration code as used
-      await registrationService.markCodeAsUsed(registrationCode);
-      
-      const user = result.rows[0];
-      return {
-        id: user.id,
-        employeeId: user.employee_id,
-        name: user.name,
-        email: user.email,
-        role: user.role as "admin" | "employee" | "hr" | "manager",
-        department: user.department,
-        designation: user.designation,
-        status: user.status as "available" | "busy" | "away" | "offline",
-        address: user.address,
-        phone: user.phone,
-        avatarUrl: user.avatar_url,
-        organizationLogo: user.organization_logo
-      };
-    } catch (error) {
-      console.error("Error registering employee:", error);
-      if (error instanceof Error) {
-        throw error;
-      }
-      throw new Error("Failed to register employee");
-    }
-  },
-  
-  async updateUserStatus(userId: number, status: "available" | "busy" | "away" | "offline"): Promise<boolean> {
-    try {
-      await db.query(
-        `UPDATE users SET status = $1 WHERE id = $2`,
-        [status, userId]
-      );
       
       return true;
     } catch (error) {
       console.error("Error updating user status:", error);
       return false;
     }
+  },
+  
+  getCurrentUser(): User | null {
+    const user = localStorage.getItem('currentUser');
+    return user ? JSON.parse(user) : null;
+  },
+  
+  logout(): void {
+    localStorage.removeItem('currentUser');
   }
 };
