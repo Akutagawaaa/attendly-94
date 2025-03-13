@@ -148,21 +148,6 @@ export default function LoginForm() {
           <OTPForm />
         </TabsContent>
       </Tabs>
-      
-      <div className="mt-4 text-center text-sm">
-        <p className="text-xs text-muted-foreground">
-          For demo purposes, use:
-          <br />
-          <code className="text-xs bg-muted px-1 py-0.5 rounded">
-            employee@example.com
-          </code>{" "}
-          or{" "}
-          <code className="text-xs bg-muted px-1 py-0.5 rounded">
-            admin@example.com
-          </code>{" "}
-          with any password
-        </p>
-      </div>
     </div>
   );
 }
