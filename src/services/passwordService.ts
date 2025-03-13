@@ -2,34 +2,44 @@
 import { ResetPasswordRequest } from "../models/types";
 import { db } from "../config/db";
 import { toast } from "sonner";
-import crypto from 'crypto';
+
+// Helper function to generate a random token
+const generateRandomToken = () => {
+  return Math.random().toString(36).substring(2, 34);
+};
 
 export const passwordService = {
   async requestPasswordReset(email: string): Promise<boolean> {
     try {
-      // Check if user exists
-      const userResult = await db.query(
-        "SELECT id FROM users WHERE email = $1",
-        [email]
-      );
+      // Check if user exists in localStorage
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
+      const userExists = users.some((u: any) => u.email === email);
       
-      if (userResult.rows.length === 0) {
+      if (!userExists) {
         return false;
       }
       
       // Generate token
-      const token = crypto.randomBytes(32).toString('hex');
+      const token = generateRandomToken();
       const expiryDate = new Date();
       expiryDate.setHours(expiryDate.getHours() + 24); // Token valid for 24 hours
       
-      // Store token in database
-      await db.query(
-        `INSERT INTO password_reset_tokens (email, token, expiry_date)
-         VALUES ($1, $2, $3)
-         ON CONFLICT (email) 
-         DO UPDATE SET token = $2, expiry_date = $3, is_used = FALSE`,
-        [email, token, expiryDate]
-      );
+      // Store token in localStorage
+      const resetTokens = JSON.parse(localStorage.getItem('passwordResetTokens') || '[]');
+      
+      // Remove any existing tokens for this email
+      const filteredTokens = resetTokens.filter((t: any) => t.email !== email);
+      
+      // Add new token
+      filteredTokens.push({
+        email,
+        token,
+        expiry_date: expiryDate.toISOString(),
+        is_used: false,
+        created_at: new Date().toISOString()
+      });
+      
+      localStorage.setItem('passwordResetTokens', JSON.stringify(filteredTokens));
       
       // In a real-world app, we would send an email with the reset link
       // For now, we'll just console log it
@@ -44,13 +54,17 @@ export const passwordService = {
   
   async validateResetToken(token: string, email: string): Promise<boolean> {
     try {
-      const result = await db.query(
-        `SELECT * FROM password_reset_tokens
-         WHERE token = $1 AND email = $2 AND expiry_date > NOW() AND is_used = FALSE`,
-        [token, email]
+      const resetTokens = JSON.parse(localStorage.getItem('passwordResetTokens') || '[]');
+      const now = new Date();
+      
+      const validToken = resetTokens.find((t: any) => 
+        t.token === token && 
+        t.email === email && 
+        new Date(t.expiry_date) > now && 
+        !t.is_used
       );
       
-      return result.rows.length > 0;
+      return !!validToken;
     } catch (error) {
       console.error("Error validating reset token:", error);
       return false;
@@ -65,20 +79,29 @@ export const passwordService = {
         return false;
       }
       
-      // Hash the new password (in a real app, use bcrypt or similar)
-      const passwordHash = newPassword; // In a real app, this would be hashed
+      // Update the user's password in localStorage
+      const users = JSON.parse(localStorage.getItem('users') || '[]');
       
-      // Update the user's password
-      await db.query(
-        "UPDATE users SET password_hash = $1 WHERE email = $2",
-        [passwordHash, email]
-      );
+      const updatedUsers = users.map((user: any) => {
+        if (user.email === email) {
+          return { ...user, password_hash: newPassword }; // In a real app, this would be hashed
+        }
+        return user;
+      });
+      
+      localStorage.setItem('users', JSON.stringify(updatedUsers));
       
       // Mark the token as used
-      await db.query(
-        "UPDATE password_reset_tokens SET is_used = TRUE WHERE token = $1",
-        [token]
-      );
+      const resetTokens = JSON.parse(localStorage.getItem('passwordResetTokens') || '[]');
+      
+      const updatedTokens = resetTokens.map((t: any) => {
+        if (t.token === token && t.email === email) {
+          return { ...t, is_used: true };
+        }
+        return t;
+      });
+      
+      localStorage.setItem('passwordResetTokens', JSON.stringify(updatedTokens));
       
       return true;
     } catch (error) {
