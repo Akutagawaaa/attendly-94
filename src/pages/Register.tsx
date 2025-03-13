@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,7 +54,7 @@ export default function Register() {
         return;
       }
       
-      // Register the user
+      // Register the user - fix: Passing both the registration data and the registration code
       const result = await userService.registerEmployee({
         name: formData.name,
         email: formData.email,
@@ -63,12 +62,10 @@ export default function Register() {
         department: formData.department,
         designation: formData.designation,
         role: formData.role as "admin" | "employee" | "hr" | "manager"
-      });
+      }, formData.registrationCode);
       
       if (result) {
-        // Mark the registration code as used
-        await registrationService.markCodeAsUsed(formData.registrationCode);
-        
+        // Mark the registration code as used - this is now done inside the registerEmployee function
         toast.success("Registration successful");
         navigate("/login");
       }
