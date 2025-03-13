@@ -43,7 +43,7 @@ export default function Admin() {
       setLoading(true);
       
       // Fetch all data needed for admin dashboard
-      const employeesData = await userService.getAllUsers();
+      const employeesData = await userService.getAllEmployees();
       const attendanceData = await attendanceService.getAllAttendance();
       const leaveData = await leaveService.getAllLeaveRequests();
       const payrollData = await payrollService.getAllPayroll();

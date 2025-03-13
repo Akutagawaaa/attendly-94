@@ -5,7 +5,7 @@ export interface User {
   name: string;
   email: string;
   password?: string;
-  role: "admin" | "employee" | "hr" | "manager";
+  role: "admin" | "employee";
   department: string;
   designation?: string;
   status?: "available" | "busy" | "away" | "offline";
@@ -66,7 +66,7 @@ export interface EmployeeRegistration {
   password: string;
   department: string;
   designation: string;
-  role: "admin" | "employee" | "hr" | "manager";
+  role: "admin" | "employee";
   avatarUrl?: string;
 }
 
@@ -82,11 +82,4 @@ export interface DatabaseConfig {
   database: string;
   username: string;
   password: string;
-}
-
-export interface ResetPasswordRequest {
-  email: string;
-  token?: string;
-  newPassword?: string;
-  confirmPassword?: string;
 }
