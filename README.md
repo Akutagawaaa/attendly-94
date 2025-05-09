@@ -38,7 +38,7 @@
 ## 🎬 Demo & Screenshots
 
 
-![Screenshot (175)](https://github.com/user-attachments/assets/15d5049e-8b1d-499d-b73c-d5d0b51ceef1)
+![Screenshot (213)](https://github.com/user-attachments/assets/98797f6c-2c59-44bb-a99a-fe08310bb0d4)
 
 ---
 
